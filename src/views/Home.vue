@@ -1,13 +1,13 @@
 <template>
   <el-container>
-    <el-main>
+    <el-main v-if="isLoaded">
       <div class="voice">
-        <speaker text="黄瓜" />
+        <speaker :text="quiz.question" />
       </div>
       <options
-        :options="answers"
-        :success-index="selectedIndex === null ? undefined : correctIndex"
-        :failure-index="selectedIndex === correctIndex ? undefined : selectedIndex"
+        :options="quiz.options"
+        :success-index="selectedIndex === null ? undefined : quiz.correctIndex"
+        :failure-index="selectedIndex === quiz.correctIndex ? undefined : selectedIndex"
         @select="checkAnswer"
       />
     </el-main>
@@ -16,8 +16,9 @@
 
 <script lang="ts">
   import { Component, Vue } from 'vue-property-decorator';
-  import Speaker from '@/components/Speaker.vue';
   import Options from '@/components/Options.vue';
+  import Speaker from '@/components/Speaker.vue';
+  import $wordSet, { Quiz } from '@/store/wordSet';
 
   @Component({
     components: {
@@ -26,30 +27,31 @@
     }
   })
   export default class Home extends Vue {
-    private jsonp = require('jsonp');
-
-    private answers = [
-      'なす',
-      'きゅうり',
-      'とまと',
-      'ねぎ'
-    ];
-    private correctIndex = 1;
     private selectedIndex: number | null = null;
 
-    load() {
-      const url = 'https://spreadsheets.google.com/feeds/list/1iH55w3rJxZu0wBGs0AoAqwUpE_iSo28-QTU8voB7EMY/1/public/values?alt=json-in-script';
-      this.jsonp(url, {}, (err: any, data: any) => {
-        console.log(data);
-      });
+    get isLoaded(): boolean {
+      return !!$wordSet.quiz;
+    }
+
+    get quiz(): Quiz {
+      return $wordSet.quiz!;
     }
 
     checkAnswer(selectedIndex: number) {
       this.selectedIndex = selectedIndex;
+
+      setTimeout(() => {
+        this.selectedIndex = null;
+        $wordSet.REFRESH_QUIZ();
+      }, 2000);
     }
 
     mounted() {
-      this.load();
+      $wordSet
+        .downloadWordSet({sheetId: '1iH55w3rJxZu0wBGs0AoAqwUpE_iSo28-QTU8voB7EMY', sheetNumber: '1'})
+        .then(() => {
+          $wordSet.REFRESH_QUIZ();
+        });
     }
   }
 </script>

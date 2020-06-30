@@ -2,24 +2,24 @@
   <div>
     <el-row class="options-row" type="flex" justify="space-around">
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(0)" rounded @click="select(0)">
+        <el-button class="option" :type="buttonType(0)" rounded @click="e => select(e, 0)">
           {{options[0]}}
         </el-button>
       </el-col>
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(1)" rounded @click="select(1)">
+        <el-button class="option" :type="buttonType(1)" rounded @click="e => select(e, 1)">
           {{options[1]}}
         </el-button>
       </el-col>
     </el-row>
     <el-row class="options-row" type="flex" justify="space-around">
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(2)" rounded @click="select(2)">
+        <el-button class="option" :type="buttonType(2)" rounded @click="e => select(e, 2)">
           {{options[2]}}
         </el-button>
       </el-col>
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(3)" rounded @click="select(3)">
+        <el-button class="option" :type="buttonType(3)" rounded @click="e => select(e, 3)">
           {{options[3]}}
         </el-button>
       </el-col>
@@ -48,7 +48,8 @@
     }
 
     @Emit()
-    select(index: number) {
+    select(e: any, index: number) {
+      e.target.blur();
       return index;
     }
   }

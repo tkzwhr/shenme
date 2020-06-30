@@ -19,6 +19,7 @@
     private isSpeaking = false
 
     speak() {
+      this.speech.text = this.text;
       window.speechSynthesis.speak(this.speech);
     }
 
