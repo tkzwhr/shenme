@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts">
-  import { Component, Prop, Vue } from 'vue-property-decorator';
+  import { Component, Prop, Vue, Emit } from 'vue-property-decorator';
 
   @Component
   export default class Speaker extends Vue {
@@ -18,20 +18,26 @@
     private speech!: SpeechSynthesisUtterance;
     private isSpeaking = false
 
-    speak() {
-      this.speech.text = this.text;
-      window.speechSynthesis.speak(this.speech);
-    }
-
     mounted() {
       this.speech = new SpeechSynthesisUtterance(this.text);
       this.speech.lang = 'zh-CN';
       this.speech.onstart = () => {
         this.isSpeaking = true;
+        this.click();
       }
       this.speech.onend = () => {
         this.isSpeaking = false;
       }
+    }
+
+    speak() {
+      this.speech.text = this.text;
+      window.speechSynthesis.speak(this.speech);
+    }
+
+    @Emit()
+    click() {
+      return;
     }
   }
 </script>

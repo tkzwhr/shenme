@@ -2,24 +2,48 @@
   <div>
     <el-row class="options-row" type="flex" justify="space-around">
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(0)" rounded @click="e => select(e, 0)">
+        <el-button
+          class="option"
+          :type="buttonType(0)"
+          :disabled="disabled"
+          rounded
+          @click="e => select(e, 0)"
+        >
           {{options[0]}}
         </el-button>
       </el-col>
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(1)" rounded @click="e => select(e, 1)">
+        <el-button
+          class="option"
+          :type="buttonType(1)"
+          :disabled="disabled"
+          rounded
+          @click="e => select(e, 1)"
+        >
           {{options[1]}}
         </el-button>
       </el-col>
     </el-row>
     <el-row class="options-row" type="flex" justify="space-around">
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(2)" rounded @click="e => select(e, 2)">
+        <el-button
+          class="option"
+          :type="buttonType(2)"
+          :disabled="disabled"
+          rounded
+          @click="e => select(e, 2)"
+        >
           {{options[2]}}
         </el-button>
       </el-col>
       <el-col :span="11">
-        <el-button class="option" :type="buttonType(3)" rounded @click="e => select(e, 3)">
+        <el-button
+          class="option"
+          :type="buttonType(3)"
+          :disabled="disabled"
+          rounded
+          @click="e => select(e, 3)"
+        >
           {{options[3]}}
         </el-button>
       </el-col>
@@ -32,6 +56,7 @@
 
   @Component
   export default class Speaker extends Vue {
+    @Prop() private readonly disabled!: boolean;
     @Prop() private readonly options!: Array<string>;
     @Prop() private readonly successIndex?: number;
     @Prop() private readonly failureIndex?: number;
@@ -58,6 +83,12 @@
 <style lang="scss">
   .option {
     width: 100%;
+
+    > span {
+      display: inline-block;
+      padding: 1rem;
+      font-size: 200%;
+    }
   }
   .options-row {
     margin-bottom: 2rem;
