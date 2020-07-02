@@ -3,6 +3,7 @@ import store from './index';
 import jsonp from '@/libs/jsonp';
 
 export interface WordCard {
+  holderId: string;
   front: string;
   back: string;
 }
@@ -15,15 +16,23 @@ export interface Question {
 
 export interface WordNoteState {
   items: Array<WordCard>;
+  activeHolderId: string;
 }
 
-@Module({ dynamic: true, store, name: "wordNote", namespaced: true })
+@Module({
+  dynamic: true,
+  store,
+  name: "wordNote",
+  namespaced: true,
+  preserveState: localStorage.getItem('vuex') !== null
+})
 class WordNote extends VuexModule implements WordNoteState {
   items: Array<WordCard> = [];
+  activeHolderId = '';
 
   get question(): () => Question {
     return () => {
-      const items = this.items.concat();
+      const items = this.items.filter(t => t.holderId === this.activeHolderId);
 
       // fisher-yates algorithm
       for (let i = items.length - 1; i > 0; --i) {
@@ -44,6 +53,11 @@ class WordNote extends VuexModule implements WordNoteState {
   }
 
   @Mutation
+  SELECT(payload: string) {
+    this.activeHolderId = payload;
+  }
+
+  @Mutation
   REPLACE(payload: Array<WordCard>) {
     this.items = payload;
   }
@@ -53,6 +67,7 @@ class WordNote extends VuexModule implements WordNoteState {
     const url = `https://spreadsheets.google.com/feeds/list/${payload.sheetId}/${payload.sheetNumber}/public/values?alt=json-in-script`;
     const data = await jsonp(url, {});
     const wordnote: Array<WordCard> = data.feed.entry.map((t: any) => ({
+      holderId: `${payload.sheetId}-${payload.sheetNumber}`,
       front: t['gsx$front']['$t'],
       back: t['gsx$back']['$t']
     }));

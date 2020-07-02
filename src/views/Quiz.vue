@@ -58,13 +58,9 @@
     private chainedCount = 0;
 
     mounted() {
-      const sheetId = this.$route.query.sheetId as string;
-      const sheetNumber = this.$route.query.sheetNumber as string;
-      $wordNote
-        .download({sheetId, sheetNumber})
-        .then(() => {
-          this.gameState = 'ready';
-        });
+      const holderId: string = this.$route.params.holderId as string;
+      $wordNote.SELECT(holderId);
+      this.gameState = 'ready';
     }
 
     @Watch('gameState', { immediate: true })

@@ -12,7 +12,7 @@ const routes: Array<RouteConfig> = [
     component: Top
   },
   {
-    path: '/quiz',
+    path: '/quiz/:holderId',
     name: 'Quiz',
     component: Quiz
   }

@@ -15,7 +15,9 @@
 </template>
 
 <script lang="ts">
+  import axios from 'axios';
   import { Component, Vue } from 'vue-property-decorator';
+  import $wordNote from '@/store/wordNote';
 
   @Component
   export default class Top extends Vue {
@@ -24,14 +26,40 @@
       spreadsheetNumber: 1
     }
 
-    onSubmit() {
-      this.$router.push({
-        name: 'Quiz',
-        query: {
-          sheetId: this.form.spreadsheetId,
-          sheetNumber: this.form.spreadsheetNumber
+    async onSubmit() {
+      try {
+        await axios.get(`https://spreadsheets.google.com/feeds/list/${this.form.spreadsheetId}/${this.form.spreadsheetNumber.toString()}/public/values?alt=json-in-script`);
+        await $wordNote
+          .download({
+            sheetId: this.form.spreadsheetId,
+            sheetNumber: this.form.spreadsheetNumber.toString()
+          })
+        await this.$router.push({
+          name: 'Quiz',
+          params: {
+            holderId: `${this.form.spreadsheetId}-${this.form.spreadsheetNumber}`
+          }
+        } as any)
+      } catch (err) {
+        if (err.message === 'Request failed with status code 400') {
+          console.log((this as any).$notify);
+          (this as any).$notify.error({
+            title: 'Error',
+            message: 'Spreadsheetの読み込みに失敗しました。'
+          });
+        } else if (err.message === 't.gsx$front is undefined') {
+          console.log((this as any).$notify);
+          (this as any).$notify.error({
+            title: 'Error',
+            message: '1行目にFrontがありません。'
+          });
+        } else if (err.message === 't.gsx$back is undefined') {
+          (this as any).$notify.error({
+            title: 'Error',
+            message: '1行目にBackがありません。'
+          });
         }
-      } as any)
+      }
     }
   }
 </script>
