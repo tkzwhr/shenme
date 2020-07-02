@@ -1,18 +1,18 @@
 <template>
   <el-container>
-    <el-main v-if="isLoaded">
+    <el-main v-if="question !== null">
       <el-row class="voice" type="flex" justify="space-around" align="middle">
         <el-col :span="7">
           <div>
-            正解数: 0 / 0
+            正解数: {{correctCount}} / {{answeredCount}}
           </div>
           <div>
-            連続正解数: 0
+            連続正解数: {{chainedCount}}
           </div>
         </el-col>
         <el-col :span="8">
           <speaker
-            :text="quiz.question"
+            :text="question.question"
             @click="gameState = 'wait-answer'"
           />
         </el-col>
@@ -23,12 +23,11 @@
           />
         </el-col>
       </el-row>
-      <options
+      <question-panel
+        :question="question"
         :disabled="gameState !== 'wait-answer'"
-        :options="quiz.options"
-        :success-index="selectedIndex === null ? undefined : quiz.correctIndex"
-        :failure-index="selectedIndex === quiz.correctIndex ? undefined : selectedIndex"
-        @select="checkAnswer"
+        :shows-answer="gameState === 'time-over'"
+        @on-selected="checkAnswer"
       />
     </el-main>
   </el-container>
@@ -36,28 +35,33 @@
 
 <script lang="ts">
   import { Component, Vue, Watch } from 'vue-property-decorator';
-  import $wordSet, { Quiz } from '@/store/wordSet';
+  import $wordNote, { Question } from '@/store/wordNote';
   import TimeIndicator from '@/components/TimeIndicator.vue';
   import Speaker from '@/components/Speaker.vue';
-  import Options from '@/components/Options.vue';
+  import QuestionPanel from '@/components/QuestionPanel.vue';
 
   @Component({
     components: {
       TimeIndicator,
       Speaker,
-      Options
+      QuestionPanel
     }
   })
-  export default class Home extends Vue {
+  export default class Quiz extends Vue {
     private gameState = '';
-    private selectedIndex: number | null = null;
-    private timeIndicatorCommand = "";
+
+    private timeIndicatorCommand = '';
+
+    private question: Question | null = null;
+    private answeredCount = 0;
+    private correctCount = 0;
+    private chainedCount = 0;
 
     mounted() {
       const sheetId = this.$route.query.sheetId as string;
       const sheetNumber = this.$route.query.sheetNumber as string;
-      $wordSet
-        .downloadWordSet({sheetId, sheetNumber})
+      $wordNote
+        .download({sheetId, sheetNumber})
         .then(() => {
           this.gameState = 'ready';
         });
@@ -67,15 +71,15 @@
     setup(value: string) {
       switch (value) {
         case 'ready':
-          $wordSet.REFRESH_QUIZ();
-          this.selectedIndex = null;
+          this.question = $wordNote.question();
           this.timeIndicatorCommand = 'set:3000';
           break;
         case 'wait-answer':
           this.timeIndicatorCommand = 'start';
           break;
         case 'time-over':
-          this.selectedIndex = this.quiz.correctIndex;
+          this.answeredCount += 1;
+          this.chainedCount = 0;
           this.timeIndicatorCommand = 'stop';
           setTimeout(() => { this.gameState = 'ready'; }, 2000);
           break;
@@ -86,16 +90,10 @@
       }
     }
 
-    get isLoaded(): boolean {
-      return !!$wordSet.quiz;
-    }
-
-    get quiz(): Quiz {
-      return $wordSet.quiz ?? { question: '', options: [], correctIndex: 0 };
-    }
-
-    checkAnswer(selectedIndex: number) {
-      this.selectedIndex = selectedIndex;
+    checkAnswer(isCorrect: boolean) {
+      this.answeredCount += 1;
+      this.correctCount += isCorrect ? 1 : 0;
+      this.chainedCount = isCorrect ? this.chainedCount + 1 : 0;
       this.gameState = 'answered';
     }
   }

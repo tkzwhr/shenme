@@ -18,7 +18,7 @@
   import { Component, Vue } from 'vue-property-decorator';
 
   @Component
-  export default class Home extends Vue {
+  export default class Top extends Vue {
     private form = {
       spreadsheetId: '1iH55w3rJxZu0wBGs0AoAqwUpE_iSo28-QTU8voB7EMY',
       spreadsheetNumber: 1
