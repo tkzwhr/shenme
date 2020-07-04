@@ -4,7 +4,7 @@
       <el-row class="voice" type="flex" justify="space-around" align="middle">
         <el-col :span="7">
           <div>
-            正解数: {{correctCount}} / {{answeredCount}}
+            正解数: {{correctCount}} / {{correctCount + incorrectCount}}
           </div>
           <div>
             連続正解数: {{chainedCount}}
@@ -13,21 +13,18 @@
         <el-col :span="8">
           <speaker
             :text="question.question"
-            @click="gameState = 'wait-answer'"
+            @click="provideQuestion"
           />
         </el-col>
         <el-col :span="7">
-          <time-indicator
-            :command="timeIndicatorCommand"
-            @time-over="gameState = 'time-over'"
-          />
+          <time-indicator :progress="timeProgress" />
         </el-col>
       </el-row>
       <question-panel
         :question="question"
-        :disabled="gameState !== 'wait-answer'"
-        :shows-answer="gameState === 'time-over'"
-        @on-selected="checkAnswer"
+        :disabled="!readyToAnswer"
+        :shows-answer="timeIsUp"
+        @on-selected="answered"
       />
     </el-main>
   </el-container>
@@ -35,7 +32,9 @@
 
 <script lang="ts">
   import { Component, Vue, Watch } from 'vue-property-decorator';
-  import $wordNote, { Question } from '@/store/wordNote';
+  import $spreadsheet from '@/store/spreadsheet';
+  import $quiz, { ActionState, Question } from '@/store/quiz';
+  import $timer from '@/store/timer';
   import TimeIndicator from '@/components/TimeIndicator.vue';
   import Speaker from '@/components/Speaker.vue';
   import QuestionPanel from '@/components/QuestionPanel.vue';
@@ -48,49 +47,79 @@
     }
   })
   export default class Quiz extends Vue {
-    private gameState = '';
-
-    private timeIndicatorCommand = '';
-
     private question: Question | null = null;
-    private answeredCount = 0;
-    private correctCount = 0;
-    private chainedCount = 0;
 
     mounted() {
-      const holderId: string = this.$route.params.holderId as string;
-      $wordNote.SELECT(holderId);
-      this.gameState = 'ready';
+      const sheetId: string = this.$route.params.sheetId as string;
+      const sheet = $spreadsheet.sheets.find(t => t.sheetId === sheetId);
+      if (sheet) {
+        $timer.SET_DURATION(3000);
+        $quiz.INITIALIZE(sheet.words);
+      } else {
+        this.$router.replace({ name: 'Top', query: { error: `Sheet ID '${sheetId}' is not found.` } });
+      }
     }
 
-    @Watch('gameState', { immediate: true })
-    setup(value: string) {
+    get timeProgress(): number {
+      return $timer.timeProgress;
+    }
+
+    get actionState(): ActionState {
+      return $quiz.actionState;
+    }
+
+    get readyToAnswer(): boolean {
+      return $quiz.actionState === ActionState.PROVIDED_QUESTION;
+    }
+
+    get timeIsUp(): boolean {
+      return $quiz.actionState === ActionState.TIME_IS_UP;
+    }
+
+    get correctCount(): number {
+      return $quiz.correctCount;
+    }
+
+    get incorrectCount(): number {
+      return $quiz.incorrectCount;
+    }
+
+    get chainedCount(): number {
+      return $quiz.chainedCount;
+    }
+
+    @Watch('actionState', { immediate: true })
+    setup(value: ActionState) {
       switch (value) {
-        case 'ready':
-          this.question = $wordNote.question();
-          this.timeIndicatorCommand = 'set:3000';
+        case ActionState.STANDBY:
+          this.question = $quiz.question();
+          $timer.STOP_TIMER();
+          $timer.RESET_TIMER();
           break;
-        case 'wait-answer':
-          this.timeIndicatorCommand = 'start';
+        case ActionState.PROVIDED_QUESTION:
+          $timer.runTimer();
           break;
-        case 'time-over':
-          this.answeredCount += 1;
-          this.chainedCount = 0;
-          this.timeIndicatorCommand = 'stop';
-          setTimeout(() => { this.gameState = 'ready'; }, 2000);
+        case ActionState.ANSWERED:
+          $timer.STOP_TIMER();
           break;
-        case 'answered':
-          this.timeIndicatorCommand = 'stop';
-          setTimeout(() => { this.gameState = 'ready'; }, 2000);
+        default:
           break;
       }
     }
 
-    checkAnswer(isCorrect: boolean) {
-      this.answeredCount += 1;
-      this.correctCount += isCorrect ? 1 : 0;
-      this.chainedCount = isCorrect ? this.chainedCount + 1 : 0;
-      this.gameState = 'answered';
+    @Watch('timeProgress', { immediate: true })
+    checkTimeIsUp(value: number) {
+      if (value >= 1.0) {
+        $quiz.answer(null);
+      }
+    }
+
+    provideQuestion() {
+      $quiz.PROVIDE_QUESTION();
+    }
+
+    answered(isCorrect: boolean) {
+      $quiz.answer(isCorrect);
     }
   }
 </script>

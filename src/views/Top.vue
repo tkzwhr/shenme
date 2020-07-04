@@ -51,9 +51,7 @@
                 </span>
               </el-tooltip>
             </div>
-            <div v-else>
-              {{scope.row.sheetName}}
-            </div>
+            <RouterLink v-else :to="{ name: 'Quiz', params: { sheetId: scope.row.sheetId } }">{{scope.row.sheetName}}</RouterLink>
           </template>
         </el-table-column>
         <el-table-column
@@ -123,6 +121,15 @@
     private urlError: string | null = null;
     private dialogVisible = false;
 
+    mounted() {
+      this.validateUrl();
+
+      if (this.$route.query.error) {
+        (this as any).$message.error(this.$route.query.error as string);
+        this.$router.replace({ name: 'Top' });
+      }
+    }
+
     get spreadsheet(): SpreadsheetState {
       return {
         url: $spreadsheet.url,
@@ -175,10 +182,6 @@
 
     deleteSpreadsheet() {
       $spreadsheet.DELETE();
-    }
-
-    mounted() {
-      this.validateUrl();
     }
   }
 </script>
