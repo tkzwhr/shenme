@@ -65,16 +65,4 @@
 </script>
 
 <style lang="scss">
-  .el-container {
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-  }
-  .el-main {
-    flex: none !important;
-    min-width: 100%;
-  }
-  .spreadsheet-id > input {
-    width: 600px !important;
-  }
 </style>

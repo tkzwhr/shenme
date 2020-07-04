@@ -1,6 +1,6 @@
 <template>
   <el-container>
-    <el-main v-if="question !== null">
+    <el-main class="quiz" v-if="question !== null">
       <el-row class="voice" type="flex" justify="space-around" align="middle">
         <el-col :span="7">
           <div>
@@ -95,19 +95,12 @@
   }
 </script>
 
-<style lang="scss">
-  .el-container {
-    height: 100%;
-    justify-content: center;
-    align-items: center;
+<style lang="scss" scoped>
+  .quiz {
+    min-width: 90%;
   }
-  .el-main {
-    flex: none !important;
-    min-width: 100%;
-
-    > .voice {
-      text-align: center;
-      margin-bottom: 10rem;
-    }
+  .voice {
+    text-align: center;
+    margin-bottom: 10rem;
   }
 </style>
