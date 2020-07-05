@@ -1,8 +1,14 @@
-import { Mutation, Action, VuexModule, Module, getModule } from 'vuex-module-decorators';
-import dayjs, { Dayjs } from 'dayjs';
-import store from './index';
+import {
+  Mutation,
+  Action,
+  VuexModule,
+  Module,
+  getModule
+} from "vuex-module-decorators";
+import dayjs, { Dayjs } from "dayjs";
+import store from "./index";
 
-export interface TimerStore {
+export interface TimerState {
   duration: number;
   currentDate: Date | null;
   beginDate: Dayjs | null;
@@ -15,7 +21,7 @@ export interface TimerStore {
   name: "timer",
   namespaced: true
 })
-class Timer extends VuexModule implements TimerStore {
+class Timer extends VuexModule implements TimerState {
   duration = 0;
   currentDate: Date | null = null;
   beginDate: Dayjs | null = null;
@@ -26,7 +32,7 @@ class Timer extends VuexModule implements TimerStore {
       return 0;
     }
 
-    const elapsed = this.beginDate.diff(this.currentDate, 'ms');
+    const elapsed = this.beginDate.diff(this.currentDate, "ms");
     return Math.min(-elapsed / this.duration, 1.0);
   }
 
@@ -67,26 +73,27 @@ class Timer extends VuexModule implements TimerStore {
 
   @Action({ rawError: true })
   async runTimer() {
-    this.context.commit('START_TIMER');
+    this.context.commit("START_TIMER");
     const promise = new Promise(resolve => {
       const intervalId = setInterval(() => {
         const isRunning = (this.context.state as any).beginDate !== null;
         if (!isRunning) {
-          this.context.commit('STOP_TIMER');
+          this.context.commit("STOP_TIMER");
           resolve();
           return;
         }
 
-        this.context.commit('SET_CURRENT_TIME');
+        this.context.commit("SET_CURRENT_TIME");
 
-        const currentProgress: number = (this.context.getters as any).timeProgress;
+        const currentProgress: number = (this.context.getters as any)
+          .timeProgress;
         if (currentProgress >= 1.0) {
-          this.context.commit('STOP_TIMER');
+          this.context.commit("STOP_TIMER");
           resolve();
           return;
         }
       }, 200);
-      this.context.commit('SET_TIME_INTERVAL_ID', intervalId);
+      this.context.commit("SET_TIME_INTERVAL_ID", intervalId);
     });
     await promise;
   }

@@ -1,7 +1,13 @@
-import { Mutation, Action, VuexModule, Module, getModule } from 'vuex-module-decorators';
-import axios from 'axios';
-import store from './index';
-import Word from '@/entities/word';
+import {
+  Mutation,
+  Action,
+  VuexModule,
+  Module,
+  getModule
+} from "vuex-module-decorators";
+import axios from "axios";
+import store from "./index";
+import Word from "@/entities/word";
 
 export interface SpreadsheetSheetState {
   fetching: boolean;
@@ -23,7 +29,7 @@ export interface SpreadsheetState {
   store,
   name: "spreadsheet",
   namespaced: true,
-  preserveState: localStorage.getItem('vuex') !== null
+  preserveState: localStorage.getItem("vuex") !== null
 })
 class Spreadsheet extends VuexModule implements SpreadsheetState {
   fetching = false;
@@ -94,11 +100,13 @@ class Spreadsheet extends VuexModule implements SpreadsheetState {
       this.START_FETCHING();
       const url = `https://spreadsheets.google.com/feeds/worksheets/${spreadsheetId}/public/basic?alt=json`;
       const data = await axios.get(url);
-      const sheets: Array<SpreadsheetSheetState> = data.data['feed']['entry'].map((t: any) => ({
+      const sheets: Array<SpreadsheetSheetState> = data.data["feed"][
+        "entry"
+      ].map((t: any) => ({
         fetching: false,
         fetchingErrors: [],
-        sheetId: t.id['$t'].split("/").slice(-1)[0],
-        sheetName: t.title['$t'],
+        sheetId: t.id["$t"].split("/").slice(-1)[0],
+        sheetName: t.title["$t"],
         words: []
       }));
       this.SET_SHEETS({
@@ -112,45 +120,46 @@ class Spreadsheet extends VuexModule implements SpreadsheetState {
           this.START_FETCHING_SHEET(t.sheetId);
           const url = `https://spreadsheets.google.com/feeds/list/${spreadsheetId}/${t.sheetId}/public/values?alt=json`;
           const data = await axios.get(url);
-          const words: Array<Word> = data.data['feed']['entry'].map((u: any) => ({
-            front: u['gsx$front']['$t'],
-            back: u['gsx$back']['$t']
-          }));
+          const words: Array<Word> = data.data["feed"]["entry"].map(
+            (u: any) => ({
+              front: u["gsx$front"]["$t"],
+              back: u["gsx$back"]["$t"]
+            })
+          );
           if (words.length < 4) {
             // noinspection ExceptionCaughtLocallyJS
             throw { message: "too few words" };
           }
-          this.SET_WORDS({sheetId: t.sheetId, words: words});
+          this.SET_WORDS({ sheetId: t.sheetId, words: words });
         } catch (e) {
-          console.log(e);
           const errors: Array<string> = [];
           switch (e.message) {
-            case '_data.data.feed.entry is undefined':
-              errors.push('No words are found.');
+            case "_data.data.feed.entry is undefined":
+              errors.push("No words are found.");
               break;
-            case 'u.gsx$front is undefined':
-              errors.push('`Front` is not defined at first row.');
+            case "u.gsx$front is undefined":
+              errors.push("`Front` is not defined at first row.");
               break;
-            case 'u.gsx$back is undefined':
-              errors.push('`Back` is not defined at first row.');
+            case "u.gsx$back is undefined":
+              errors.push("`Back` is not defined at first row.");
               break;
-            case 'too few words':
-              errors.push('At least 4 rows are required.');
+            case "too few words":
+              errors.push("At least 4 rows are required.");
               break;
             default:
-              errors.push('Unknown error');
+              errors.push("Unknown error");
           }
-          this.SET_SHEET_ERRORS({sheetId: t.sheetId, errors});
+          this.SET_SHEET_ERRORS({ sheetId: t.sheetId, errors });
         }
       });
     } catch (e) {
       const errors: Array<string> = [];
       switch (e.message) {
-        case 'Network Error':
-          errors.push('Cannot access to spreadsheet.');
+        case "Network Error":
+          errors.push("Cannot access to spreadsheet.");
           break;
         default:
-          errors.push('Unknown error');
+          errors.push("Unknown error");
       }
       this.SET_SPREADSHEET_ERRORS(errors);
     }
