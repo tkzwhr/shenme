@@ -1,20 +1,8 @@
 import { Mutation, Action, VuexModule, Module, getModule } from 'vuex-module-decorators';
 import store from './index';
-import { Word } from './spreadsheet';
-
-export enum ActionState {
-  CREATED,
-  STANDBY,
-  PROVIDED_QUESTION,
-  ANSWERED,
-  TIME_IS_UP
-}
-
-export interface Question {
-  question: string;
-  answer: string;
-  options: Array<string>;
-}
+import Word from '@/entities/word';
+import Question from '@/entities/question';
+import ActionState from '@/enums/actionState';
 
 export interface QuizStore {
   words: Array<Word>;

@@ -32,8 +32,10 @@
 
 <script lang="ts">
   import { Component, Vue, Watch } from 'vue-property-decorator';
+  import Question from '@/entities/question';
+  import ActionState from '@/enums/actionState';
   import $spreadsheet from '@/store/spreadsheet';
-  import $quiz, { ActionState, Question } from '@/store/quiz';
+  import $quiz from '@/store/quiz';
   import $timer from '@/store/timer';
   import TimeIndicator from '@/components/TimeIndicator.vue';
   import Speaker from '@/components/Speaker.vue';
@@ -49,6 +51,7 @@
   export default class Quiz extends Vue {
     private question: Question | null = null;
 
+    // noinspection JSUnusedGlobalSymbols
     mounted() {
       const sheetId: string = this.$route.params.sheetId as string;
       const sheet = $spreadsheet.sheets.find(t => t.sheetId === sheetId);

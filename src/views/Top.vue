@@ -121,6 +121,7 @@
     private urlError: string | null = null;
     private dialogVisible = false;
 
+    // noinspection JSUnusedGlobalSymbols
     mounted() {
       this.validateUrl();
 

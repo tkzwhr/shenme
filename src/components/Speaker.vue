@@ -18,6 +18,7 @@
     private speech!: SpeechSynthesisUtterance;
     private isSpeaking = false
 
+    // noinspection JSUnusedGlobalSymbols
     mounted() {
       this.speech = new SpeechSynthesisUtterance(this.text);
       this.speech.lang = 'zh-CN';
@@ -43,6 +44,7 @@
 </script>
 
 <style>
+  /* noinspection CssUnusedSymbol */
   .custom-icon {
     font-size: 10vh;
   }

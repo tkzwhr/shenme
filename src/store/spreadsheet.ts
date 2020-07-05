@@ -1,11 +1,7 @@
 import { Mutation, Action, VuexModule, Module, getModule } from 'vuex-module-decorators';
-import store from './index';
 import axios from 'axios';
-
-export interface Word {
-  front: string;
-  back: string;
-}
+import store from './index';
+import Word from '@/entities/word';
 
 export interface SpreadsheetSheetState {
   fetching: boolean;
@@ -98,7 +94,7 @@ class Spreadsheet extends VuexModule implements SpreadsheetState {
       this.START_FETCHING();
       const url = `https://spreadsheets.google.com/feeds/worksheets/${spreadsheetId}/public/basic?alt=json`;
       const data = await axios.get(url);
-      const sheets: Array<SpreadsheetSheetState> = data.data.feed.entry.map((t: any) => ({
+      const sheets: Array<SpreadsheetSheetState> = data.data['feed']['entry'].map((t: any) => ({
         fetching: false,
         fetchingErrors: [],
         sheetId: t.id['$t'].split("/").slice(-1)[0],
@@ -116,11 +112,12 @@ class Spreadsheet extends VuexModule implements SpreadsheetState {
           this.START_FETCHING_SHEET(t.sheetId);
           const url = `https://spreadsheets.google.com/feeds/list/${spreadsheetId}/${t.sheetId}/public/values?alt=json`;
           const data = await axios.get(url);
-          const words: Array<Word> = data.data.feed.entry.map((u: any) => ({
+          const words: Array<Word> = data.data['feed']['entry'].map((u: any) => ({
             front: u['gsx$front']['$t'],
             back: u['gsx$back']['$t']
           }));
           if (words.length < 4) {
+            // noinspection ExceptionCaughtLocallyJS
             throw { message: "too few words" };
           }
           this.SET_WORDS({sheetId: t.sheetId, words: words});

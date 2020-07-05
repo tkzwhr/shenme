@@ -28,9 +28,3 @@
     }
   }
 </script>
-
-<style>
-  .custom-icon {
-    font-size: 10vh;
-  }
-</style>
