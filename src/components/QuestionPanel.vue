@@ -53,7 +53,7 @@
 
 <script lang="ts">
   import { Component, Prop, Emit, Watch, Vue } from 'vue-property-decorator';
-  import { Question } from '@/store/wordNote';
+  import Question from '@/entities/question';
 
   @Component
   export default class QuestionPanel extends Vue {
