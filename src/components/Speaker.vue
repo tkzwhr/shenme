@@ -13,7 +13,7 @@
 
   @Component
   export default class Speaker extends Vue {
-    @Prop() private text!: string;
+    @Prop() private readonly text!: string;
 
     private speech!: SpeechSynthesisUtterance;
     private isSpeaking = false
