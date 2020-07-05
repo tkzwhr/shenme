@@ -48,7 +48,6 @@
   import SheetList from '@/components/SheetList.vue';
   import ImportSpreadsheetForm from '@/components/ImportSpreadsheetForm.vue';
   import SettingsForm from '@/components/SettingsForm.vue';
-  import GameMode from '@/enums/gameMode'
 
   @Component({
     components: {
