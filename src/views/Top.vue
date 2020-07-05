@@ -11,27 +11,27 @@
 
     <el-main>
       <spreadsheet-panel
-        :spreadsheet-url="spreadsheet.url"
+        :spreadsheet-url="spreadsheet$.url"
         @sync="syncSpreadsheet"
         @truncate="deleteSpreadsheet"
       ></spreadsheet-panel>
 
       <sheet-list
         :visible="!dialogVisibility.importSpreadsheet"
-        :spreadsheet="spreadsheet"
-        :records="records"
+        :spreadsheet="spreadsheet$"
+        :records="records$.records"
         @navigate-to-game="navigateToGame"
       ></sheet-list>
 
       <import-spreadsheet-form
         :visible="dialogVisibility.importSpreadsheet"
-        :spreadsheet="spreadsheet"
+        :spreadsheet="spreadsheet$"
         @close="dialogVisibility.importSpreadsheet = false"
       ></import-spreadsheet-form>
 
       <settings-form
         :visible="dialogVisibility.settings"
-        :settings="settings"
+        :settings="settings$"
         @close="handleSettings"
       ></settings-form>
     </el-main>
@@ -40,9 +40,8 @@
 
 <script lang="ts">
   import { Component, Vue } from 'vue-property-decorator';
-  import Record from '@/entities/record';
   import Setting from '@/entities/setting';
-  import $spreadsheet, { SpreadsheetState } from '@/store/spreadsheet';
+  import $spreadsheet from '@/store/spreadsheet';
   import $records from '@/store/records';
   import $settings from '@/store/settings';
   import SpreadsheetPanel from '@/components/SpreadsheetPanel.vue';
@@ -59,6 +58,10 @@
     }
   })
   export default class Top extends Vue {
+    private readonly spreadsheet$ = $spreadsheet;
+    private readonly records$ = $records;
+    private readonly settings$ = $settings;
+
     private dialogVisibility = {
       importSpreadsheet: false,
       settings: false
@@ -72,35 +75,13 @@
       }
     }
 
-    get spreadsheet(): SpreadsheetState {
-      return {
-        url: $spreadsheet.url,
-        fetching: $spreadsheet.fetching,
-        fetchingErrors: $spreadsheet.fetchingErrors,
-        sheets: $spreadsheet.sheets,
-      };
-    }
-
-    get records(): Array<Record> {
-      return $records.records;
-    }
-
-    get settings(): Setting {
-      return {
-        gameMode: $settings.gameMode,
-        answerTime: $settings.answerTime,
-        numberOfRepeatQuestion: $settings.numberOfRepeatQuestion,
-        numberOfQuestions: $settings.numberOfQuestions
-      };
-    }
-
     syncSpreadsheet(spreadsheetId: string) {
       this.dialogVisibility.importSpreadsheet = true;
-      $spreadsheet.fetch(spreadsheetId);
+      this.spreadsheet$.fetch(spreadsheetId);
     }
 
     deleteSpreadsheet() {
-      $spreadsheet.DELETE();
+      this.spreadsheet$.DELETE();
     }
 
     navigateToGame(sheetId: string) {
@@ -111,7 +92,7 @@
       this.dialogVisibility.settings = false;
 
       if (value) {
-        $settings.UPDATE(value);
+        this.settings$.UPDATE(value);
       }
     }
   }

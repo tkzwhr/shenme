@@ -122,7 +122,6 @@ class Spreadsheet extends VuexModule implements SpreadsheetState {
           }
           this.SET_WORDS({sheetId: t.sheetId, words: words});
         } catch (e) {
-          console.log(e);
           const errors: Array<string> = [];
           switch (e.message) {
             case '_data.data.feed.entry is undefined':
