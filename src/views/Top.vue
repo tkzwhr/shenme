@@ -80,43 +80,11 @@
         ></el-table-column>
       </el-table>
 
-      <el-dialog title="Synchronizing with Google Spreadsheets..." :visible.sync="importDialogVisible">
-        <el-alert
-          v-if="spreadsheet.fetchingErrors.length > 0"
-          type="error"
-          :title="spreadsheet.fetchingErrors.join('\n')"
-          :closable="false"
-          show-icon>
-        </el-alert>
-        <el-table v-else v-loading="spreadsheet.fetching" :data="spreadsheet.sheets" >
-          <el-table-column label="Sheet Name" prop="sheetName"></el-table-column>
-          <el-table-column align="right">
-            <template slot-scope="scope">
-              <el-tooltip
-                v-if="scope.row.fetchingErrors.length > 0"
-                :content="scope.row.fetchingErrors.join('\n')"
-                placement="top"
-              >
-                <el-button
-                  size="mini"
-                  :type="sheetStatusType(scope.row)"
-                  :icon="sheetStatusIcon(scope.row)"
-                  :loading="scope.row.fetching"
-                  circle
-                ></el-button>
-              </el-tooltip>
-              <el-button
-                v-else
-                size="mini"
-                :type="sheetStatusType(scope.row)"
-                :icon="sheetStatusIcon(scope.row)"
-                :loading="scope.row.fetching"
-                circle
-              ></el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-dialog>
+      <import-spreadsheet-form
+        :visible="dialogVisibility.importSpreadsheet"
+        :spreadsheet="spreadsheet"
+        @close="dialogVisibility.importSpreadsheet = false"
+      ></import-spreadsheet-form>
 
       <settings-form
         :visible="dialogVisibility.settings"
@@ -132,23 +100,24 @@
   import relativeTime from 'dayjs/plugin/relativeTime';
   import { Component, Watch, Vue } from 'vue-property-decorator';
   import Setting from '@/entities/setting';
-  import $spreadsheet, { SpreadsheetState, SpreadsheetSheetState } from '@/store/spreadsheet';
+  import $spreadsheet, { SpreadsheetState } from '@/store/spreadsheet';
   import $settings from '@/store/settings';
+  import ImportSpreadsheetForm from '@/components/ImportSpreadsheetForm.vue';
   import SettingsForm from '@/components/SettingsForm.vue';
-  import GameMode from '@/enums/gameMode'
 
   dayjs.extend(relativeTime);
 
   @Component({
     components: {
+      ImportSpreadsheetForm,
       SettingsForm
     }
   })
   export default class Top extends Vue {
     private newSheetUrl: string = this.spreadsheet.url ?? '';
     private urlError: string | null = null;
-    private importDialogVisible = false;
     private dialogVisibility = {
+      importSpreadsheet: false,
       settings: false
     };
 
@@ -202,29 +171,9 @@
       }
     }
 
-    sheetStatusType(data: SpreadsheetSheetState): string {
-      if (!data.fetching && data.fetchingErrors.length === 0) {
-        return "success";
-      } else if (!data.fetching && data.fetchingErrors.length > 0) {
-        return "warning";
-      } else {
-        return "default";
-      }
-    }
-
-    sheetStatusIcon(data: SpreadsheetSheetState): string {
-      if (!data.fetching && data.fetchingErrors.length === 0) {
-        return "el-icon-check";
-      } else if (!data.fetching && data.fetchingErrors.length > 0) {
-        return "el-icon-close";
-      } else {
-        return "";
-      }
-    }
-
     syncSpreadsheet() {
       if (this.spreadsheetId) {
-        this.importDialogVisible = true;
+        this.dialogVisibility.importSpreadsheet = true;
         $spreadsheet.fetch(this.spreadsheetId);
       }
     }

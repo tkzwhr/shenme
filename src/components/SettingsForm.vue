@@ -47,7 +47,7 @@
   import GameMode from '@/enums/gameMode';
 
   @Component
-  export default class Top extends Vue {
+  export default class SettingsForm extends Vue {
     @Prop() private readonly visible!: boolean;
     @Prop() private readonly settings!: Setting;
 

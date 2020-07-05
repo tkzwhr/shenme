@@ -2,7 +2,7 @@ import { Mutation, Action, VuexModule, Module, getModule } from 'vuex-module-dec
 import dayjs, { Dayjs } from 'dayjs';
 import store from './index';
 
-export interface TimerStore {
+export interface TimerState {
   duration: number;
   currentDate: Date | null;
   beginDate: Dayjs | null;
@@ -15,7 +15,7 @@ export interface TimerStore {
   name: "timer",
   namespaced: true
 })
-class Timer extends VuexModule implements TimerStore {
+class Timer extends VuexModule implements TimerState {
   duration = 0;
   currentDate: Date | null = null;
   beginDate: Dayjs | null = null;

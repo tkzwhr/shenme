@@ -4,7 +4,7 @@ import Word from '@/entities/word';
 import Question from '@/entities/question';
 import ActionState from '@/enums/actionState';
 
-export interface QuizStore {
+export interface QuizState {
   words: Array<Word>;
   actionState: ActionState;
   correctCount: number;
@@ -18,7 +18,7 @@ export interface QuizStore {
   name: "quiz",
   namespaced: true
 })
-class Quiz extends VuexModule implements QuizStore {
+class Quiz extends VuexModule implements QuizState {
   words: Array<Word> = [];
   actionState = ActionState.CREATED;
   correctCount = 0;
