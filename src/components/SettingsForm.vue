@@ -3,14 +3,14 @@
     <el-form ref="form" :model="newSettings" label-width="160px">
       <el-form-item label="Mode">
         <el-radio-group v-model="newSettings.gameMode">
-          <el-radio label="Training"></el-radio>
+          <el-radio :label="GameMode.TRAINING"></el-radio>
           <el-tooltip class="item" effect="dark" content="Continue until you get the wrong answer" placement="top-start">
-            <el-radio label="Marathon"></el-radio>
+            <el-radio :label="GameMode.MARATHON"></el-radio>
           </el-tooltip>
-          <el-radio label="Examination"></el-radio>
+          <el-radio :label="GameMode.EXAMINATION"></el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="Answer time" v-if="isNotTrainingMode">
+      <el-form-item label="Answer time" v-if="newSettings.gameMode !== GameMode.TRAINING">
         <el-slider
           v-model="newSettings.answerTime"
           :min="3"
@@ -18,14 +18,14 @@
           :format-tooltip="value => `${value} seconds`"
         ></el-slider>
       </el-form-item>
-      <el-form-item label="Repeat question" v-if="isNotTrainingMode">
+      <el-form-item label="Repeat question" v-if="newSettings.gameMode !== GameMode.TRAINING">
         <el-input-number
           v-model="newSettings.numberOfRepeatQuestion"
           :min="1"
           :max="5"
         ></el-input-number>
       </el-form-item>
-      <el-form-item label="Number of questions" v-if="isExaminationMode">
+      <el-form-item label="Number of questions" v-if="newSettings.gameMode === GameMode.EXAMINATION">
         <el-input-number
           v-model="newSettings.numberOfQuestions"
           :min="5"
@@ -48,18 +48,12 @@
 
   @Component
   export default class SettingsForm extends Vue {
+    private readonly GameMode = GameMode
+
     @Prop() private readonly visible!: boolean;
     @Prop() private readonly settings!: Setting;
 
     private newSettings: Setting = Object.assign({}, this.settings);
-
-    get isNotTrainingMode(): boolean {
-      return this.newSettings.gameMode !== GameMode.TRAINING;
-    }
-
-    get isExaminationMode(): boolean {
-      return this.newSettings.gameMode === GameMode.EXAMINATION;
-    }
 
     @Emit()
     close(updateRequired: boolean): Setting | null {
