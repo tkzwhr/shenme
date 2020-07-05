@@ -31,7 +31,7 @@
 
       <settings-form
         :visible="dialogVisibility.settings"
-        :settings="settings$"
+        :settings="settings"
         @close="handleSettings"
       ></settings-form>
     </el-main>
@@ -48,6 +48,7 @@
   import SheetList from '@/components/SheetList.vue';
   import ImportSpreadsheetForm from '@/components/ImportSpreadsheetForm.vue';
   import SettingsForm from '@/components/SettingsForm.vue';
+  import GameMode from '@/enums/gameMode'
 
   @Component({
     components: {
@@ -75,6 +76,15 @@
       }
     }
 
+    get settings(): Setting {
+      return {
+        gameMode: this.settings$.gameMode,
+        answerTime: this.settings$.answerTime,
+        numberOfRepeatQuestion: this.settings$.numberOfRepeatQuestion,
+        numberOfQuestions: this.settings$.numberOfQuestions
+      };
+    }
+
     syncSpreadsheet(spreadsheetId: string) {
       this.dialogVisibility.importSpreadsheet = true;
       this.spreadsheet$.fetch(spreadsheetId);
@@ -82,6 +92,7 @@
 
     deleteSpreadsheet() {
       this.spreadsheet$.DELETE();
+      this.records$.DELETE();
     }
 
     navigateToGame(sheetId: string) {

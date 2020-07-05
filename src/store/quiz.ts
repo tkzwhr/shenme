@@ -9,7 +9,6 @@ export interface QuizState {
   actionState: ActionState;
   correctCount: number;
   incorrectCount: number;
-  chainedCount: number;
 }
 
 @Module({
@@ -23,7 +22,10 @@ class Quiz extends VuexModule implements QuizState {
   actionState = ActionState.CREATED;
   correctCount = 0;
   incorrectCount = 0;
-  chainedCount = 0;
+
+  get answeredCount(): number {
+    return this.correctCount + this.incorrectCount;
+  }
 
   get question(): () => Question {
     return () => {
@@ -52,7 +54,6 @@ class Quiz extends VuexModule implements QuizState {
     this.words = payload;
     this.correctCount = 0;
     this.incorrectCount = 0;
-    this.chainedCount = 0;
     this.actionState = ActionState.STANDBY;
   }
 
@@ -68,7 +69,6 @@ class Quiz extends VuexModule implements QuizState {
     if (this.actionState === ActionState.PROVIDED_QUESTION) {
       this.correctCount += isCorrect ? 1 : 0;
       this.incorrectCount += isCorrect ? 0 : 1;
-      this.chainedCount = isCorrect ? this.chainedCount + 1 : 0;
       this.actionState = isCorrect === null ? ActionState.TIME_IS_UP : ActionState.ANSWERED;
     }
   }
@@ -85,7 +85,6 @@ class Quiz extends VuexModule implements QuizState {
     this.actionState = ActionState.STANDBY;
     this.correctCount = 0;
     this.incorrectCount = 0;
-    this.chainedCount = 0;
   }
 
   @Action({ rawError: true })

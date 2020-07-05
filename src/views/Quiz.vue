@@ -7,9 +7,14 @@
     <el-main v-if="question !== null">
       <el-row class="voice" type="flex" justify="space-around" align="middle">
         <el-col :span="7">
-          <div>
-            {{settings$.gameMode}}
+          <div v-if="settings$.gameMode === GameMode.MARATHON">
             SCORE: <number :number="quiz$.correctCount"></number>
+          </div>
+          <div v-else-if="settings$.gameMode === GameMode.EXAMINATION">
+            <el-row type="flex" align="middle">
+              <el-col :span="-1" class="panel-label">PROGRESS:</el-col>
+              <el-col><el-progress :percentage="examProgress"></el-progress></el-col>
+            </el-row>
           </div>
         </el-col>
         <el-col :span="8">
@@ -20,8 +25,8 @@
           />
         </el-col>
         <el-col :span="7">
-          <el-row type="flex" align="middle">
-            <el-col :span="-1" style="padding-right: .25rem">TIME:</el-col>
+          <el-row v-if="settings$.gameMode !== GameMode.TRAINING" type="flex" align="middle">
+            <el-col :span="-1" class="panel-label">TIME:</el-col>
             <el-col><time-indicator :progress="timer$.timeProgress" /></el-col>
           </el-row>
         </el-col>
@@ -35,8 +40,11 @@
       />
 
       <el-dialog title="The game is over..." :visible="visible" :show-close="false">
-        <div>
+        <div v-if="settings$.gameMode === GameMode.MARATHON" class="result">
           Your SCORE is: <number :number="quiz$.correctCount"></number>
+        </div>
+        <div v-else-if="settings$.gameMode === GameMode.EXAMINATION" class="result">
+          Your accuracy is: <number :number="Math.floor(quiz$.correctCount / quiz$.answeredCount * 100)"></number> %
         </div>
         <div slot="footer">
           <el-button @click="close(false)">Exit</el-button>
@@ -48,8 +56,9 @@
 </template>
 
 <script lang="ts">
-  import { Component, Vue, Watch } from 'vue-property-decorator';
+  import {Component, Vue, Watch} from 'vue-property-decorator';
   import Question from '@/entities/question';
+  import GameMode from '@/enums/gameMode';
   import ActionState from '@/enums/actionState';
   import $spreadsheet from '@/store/spreadsheet';
   import $records from '@/store/records';
@@ -75,6 +84,7 @@
     private readonly settings$ = $settings;
     private readonly quiz$ = $quiz;
     private readonly timer$ = $timer;
+    private readonly GameMode = GameMode;
     private readonly ActionState = ActionState;
 
     private question: Question | null = null;
@@ -101,6 +111,10 @@
       }
     }
 
+    get examProgress(): number {
+      return Math.floor(this.quiz$.answeredCount / this.settings$.numberOfQuestions * 100);
+    }
+
     @Watch('quiz$.actionState', { immediate: true })
     setup(value: ActionState) {
       switch (value) {
@@ -124,13 +138,12 @@
 
     @Watch('timer$.timeProgress', { immediate: true })
     checkTimeIsUp(value: number) {
-      if (value >= 1.0) {
+      if (this.settings$.gameMode !== GameMode.TRAINING && value >= 1.0) {
         this.quiz$.answer(null);
-        this.records$.UPDATE_CHAINED_COUNT({
-          sheetId: this.sheetName,
-          newChainedCount: this.quiz$.correctCount
-        });
-        this.visible = true;
+        const isOver = this.checkGameIsOver(false);
+        if (isOver) {
+          this.visible = true;
+        }
       }
     }
 
@@ -138,7 +151,7 @@
       this.quiz$.PROVIDE_QUESTION();
 
       this.spokeCount += 1;
-      if (this.spokeCount >= this.settings$.numberOfRepeatQuestion) {
+      if (this.settings$.gameMode !== GameMode.TRAINING && this.spokeCount >= this.settings$.numberOfRepeatQuestion) {
         this.spokeExceeded = true;
       }
     }
@@ -146,13 +159,37 @@
     answered(isCorrect: boolean) {
       this.quiz$.answer(isCorrect);
 
-      if (!isCorrect) {
-        this.records$.UPDATE_CHAINED_COUNT({
-          sheetId: this.sheetId,
-          newChainedCount: this.quiz$.correctCount
-        });
+      const isOver = this.checkGameIsOver(isCorrect);
+      if (isOver) {
         this.visible = true;
       }
+    }
+
+    checkGameIsOver(isCorrect: boolean): boolean {
+      let isOver = false;
+      switch (this.settings$.gameMode) {
+        case GameMode.MARATHON:
+          isOver = !isCorrect;
+          if (isOver) {
+            this.records$.UPDATE_CHAINED_COUNT({
+              sheetId: this.sheetId,
+              newChainedCount: this.quiz$.correctCount
+            });
+          }
+          break;
+        case GameMode.EXAMINATION:
+          isOver = this.examProgress >= 100;
+          if (isOver) {
+            this.records$.UPDATE_ACCURACY({
+              sheetId: this.sheetId,
+              newAccuracy: this.quiz$.correctCount / this.quiz$.answeredCount
+            });
+          }
+          break;
+        default:
+          break;
+      }
+      return isOver;
     }
 
     close(isRetry: boolean) {
@@ -171,5 +208,11 @@
   .voice {
     text-align: center;
     margin-bottom: 10rem;
+  }
+  .panel-label {
+    padding-right: 0.25rem;
+  }
+  .result {
+    text-align: center;
   }
 </style>
