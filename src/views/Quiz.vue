@@ -1,5 +1,9 @@
 <template>
   <el-container>
+    <el-header class="nav">
+      <el-page-header @back="$router.back()" :content="sheetName">
+      </el-page-header>
+    </el-header>
     <el-main v-if="question !== null">
       <el-row class="voice" type="flex" justify="space-around" align="middle">
         <el-col :span="7">
@@ -50,12 +54,14 @@
   })
   export default class Quiz extends Vue {
     private question: Question | null = null;
+    private sheetName = '';
 
     // noinspection JSUnusedGlobalSymbols
     mounted() {
       const sheetId: string = this.$route.params.sheetId as string;
       const sheet = $spreadsheet.sheets.find(t => t.sheetId === sheetId);
       if (sheet) {
+        this.sheetName = sheet.sheetName;
         $timer.SET_DURATION(3000);
         $quiz.INITIALIZE(sheet.words);
       } else {

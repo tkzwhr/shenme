@@ -20,4 +20,12 @@
     flex: none !important;
     width: 90%;
   }
+
+  .nav {
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    padding: 20px !important;
+    font-weight: bold;
+  }
 </style>

@@ -1,5 +1,19 @@
 <template>
   <el-container>
+    <el-header class="nav">
+      <el-row type="flex" align="middle">
+        <el-col>
+          Shenme
+        </el-col>
+        <el-col :span="-1">
+          <el-button
+            icon="el-icon-setting"
+            circle
+            @click="dialogVisibility.settings = true"
+          ></el-button>
+        </el-col>
+      </el-row>
+    </el-header>
     <el-main>
       <div class="header">
         <div>
@@ -35,7 +49,7 @@
       </div>
 
       <el-table
-        v-if="spreadsheet.url !== null && !dialogVisible"
+        v-if="spreadsheet.url !== null && !importDialogVisible"
         :data="spreadsheet.sheets"
         height="50vh"
       >
@@ -66,7 +80,7 @@
         ></el-table-column>
       </el-table>
 
-      <el-dialog title="Synchronizing with Google Spreadsheets..." :visible.sync="dialogVisible">
+      <el-dialog title="Synchronizing with Google Spreadsheets..." :visible.sync="importDialogVisible">
         <el-alert
           v-if="spreadsheet.fetchingErrors.length > 0"
           type="error"
@@ -103,6 +117,12 @@
           </el-table-column>
         </el-table>
       </el-dialog>
+
+      <settings-form
+        :visible="dialogVisibility.settings"
+        :settings="settings"
+        @close="handleSettings"
+      ></settings-form>
     </el-main>
   </el-container>
 </template>
@@ -111,15 +131,26 @@
   import dayjs from 'dayjs';
   import relativeTime from 'dayjs/plugin/relativeTime';
   import { Component, Watch, Vue } from 'vue-property-decorator';
+  import Setting from '@/entities/setting';
   import $spreadsheet, { SpreadsheetState, SpreadsheetSheetState } from '@/store/spreadsheet';
+  import $settings from '@/store/settings';
+  import SettingsForm from '@/components/SettingsForm.vue';
+  import GameMode from '@/enums/gameMode'
 
   dayjs.extend(relativeTime);
 
-  @Component
+  @Component({
+    components: {
+      SettingsForm
+    }
+  })
   export default class Top extends Vue {
     private newSheetUrl: string = this.spreadsheet.url ?? '';
     private urlError: string | null = null;
-    private dialogVisible = false;
+    private importDialogVisible = false;
+    private dialogVisibility = {
+      settings: false
+    };
 
     // noinspection JSUnusedGlobalSymbols
     mounted() {
@@ -140,6 +171,15 @@
       };
     }
 
+    get settings(): Setting {
+      return {
+        gameMode: $settings.gameMode,
+        answerTime: $settings.answerTime,
+        repeatQuestion: $settings.repeatQuestion,
+        numberOfQuestions: $settings.numberOfQuestions
+      };
+    }
+
     get spreadsheetId(): string | null {
       const result = this.newSheetUrl.match(/^https:\/\/docs.google.com\/spreadsheets\/d\/([^/]+)\/.*$/);
       return (result ?? [null, null])[1];
@@ -152,6 +192,14 @@
         return;
       }
       this.urlError = null;
+    }
+
+    handleSettings(value: Setting | null) {
+      this.dialogVisibility.settings = false;
+
+      if (value) {
+        $settings.UPDATE(value);
+      }
     }
 
     sheetStatusType(data: SpreadsheetSheetState): string {
@@ -176,7 +224,7 @@
 
     syncSpreadsheet() {
       if (this.spreadsheetId) {
-        this.dialogVisible = true;
+        this.importDialogVisible = true;
         $spreadsheet.fetch(this.spreadsheetId);
       }
     }
