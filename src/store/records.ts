@@ -1,6 +1,11 @@
-import { Mutation, VuexModule, Module, getModule } from 'vuex-module-decorators';
-import store from './index';
-import Record from '@/entities/record';
+import {
+  Mutation,
+  VuexModule,
+  Module,
+  getModule
+} from "vuex-module-decorators";
+import store from "./index";
+import Record from "@/entities/record";
 
 export interface RecordsState {
   records: Array<Record>;
@@ -11,7 +16,7 @@ export interface RecordsState {
   store,
   name: "records",
   namespaced: true,
-  preserveState: localStorage.getItem('vuex') !== null
+  preserveState: localStorage.getItem("vuex") !== null
 })
 class Records extends VuexModule implements RecordsState {
   records: Array<Record> = [];
@@ -37,7 +42,10 @@ class Records extends VuexModule implements RecordsState {
     const record = this.records.find(t => t.sheetId === data.sheetId);
     if (record) {
       record.playedCount += 1;
-      record.chainedCount = Math.max(record.chainedCount ?? 0, data.newChainedCount);
+      record.chainedCount = Math.max(
+        record.chainedCount ?? 0,
+        data.newChainedCount
+      );
     } else {
       this.records.push({
         sheetId: data.sheetId,

@@ -1,14 +1,19 @@
-import { Mutation, VuexModule, Module, getModule } from 'vuex-module-decorators';
-import store from './index';
-import Setting from '@/entities/setting';
-import GameMode from '@/enums/gameMode';
+import {
+  Mutation,
+  VuexModule,
+  Module,
+  getModule
+} from "vuex-module-decorators";
+import store from "./index";
+import Setting from "@/entities/setting";
+import GameMode from "@/enums/gameMode";
 
 @Module({
   dynamic: true,
   store,
   name: "settings",
   namespaced: true,
-  preserveState: localStorage.getItem('vuex') !== null
+  preserveState: localStorage.getItem("vuex") !== null
 })
 class Settings extends VuexModule implements Setting {
   gameMode = GameMode.TRAINING;
