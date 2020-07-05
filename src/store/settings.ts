@@ -13,14 +13,14 @@ import GameMode from '@/enums/gameMode';
 class Settings extends VuexModule implements Setting {
   gameMode = GameMode.TRAINING;
   answerTime = 5;
-  repeatQuestion = 2;
+  numberOfRepeatQuestion = 2;
   numberOfQuestions = 10;
 
   @Mutation
   UPDATE(payload: Setting) {
     this.gameMode = payload.gameMode;
     this.answerTime = payload.answerTime;
-    this.repeatQuestion = payload.repeatQuestion;
+    this.numberOfRepeatQuestion = payload.numberOfRepeatQuestion;
     this.numberOfQuestions = payload.numberOfQuestions;
   }
 }

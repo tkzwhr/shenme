@@ -1,10 +1,10 @@
 <template>
   <el-button
-    type="primary"
+    :type="disabled ? 'default' : 'primary'"
     icon="custom-icon el-icon-headset"
+    :disabled="disabled || isSpeaking"
     circle
     @click="speak()"
-    :disabled="isSpeaking"
   ></el-button>
 </template>
 
@@ -14,6 +14,7 @@
   @Component
   export default class Speaker extends Vue {
     @Prop() private readonly text!: string;
+    @Prop() private readonly disabled!: boolean;
 
     private speech!: SpeechSynthesisUtterance;
     private isSpeaking = false
@@ -24,10 +25,10 @@
       this.speech.lang = 'zh-CN';
       this.speech.onstart = () => {
         this.isSpeaking = true;
-        this.click();
       }
       this.speech.onend = () => {
         this.isSpeaking = false;
+        this.spoke();
       }
     }
 
@@ -37,7 +38,7 @@
     }
 
     @Emit()
-    click() {
+    spoke() {
       return;
     }
   }

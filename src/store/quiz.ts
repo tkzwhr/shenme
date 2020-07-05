@@ -49,10 +49,11 @@ class Quiz extends VuexModule implements QuizState {
 
   @Mutation
   INITIALIZE(payload: Array<Word>) {
-    if (this.actionState === ActionState.CREATED) {
-      this.words = payload;
-      this.actionState = ActionState.STANDBY;
-    }
+    this.words = payload;
+    this.correctCount = 0;
+    this.incorrectCount = 0;
+    this.chainedCount = 0;
+    this.actionState = ActionState.STANDBY;
   }
 
   @Mutation
@@ -77,6 +78,14 @@ class Quiz extends VuexModule implements QuizState {
     if (this.actionState === ActionState.ANSWERED || this.actionState === ActionState.TIME_IS_UP) {
       this.actionState = ActionState.STANDBY;
     }
+  }
+
+  @Mutation
+  RESET() {
+    this.actionState = ActionState.STANDBY;
+    this.correctCount = 0;
+    this.incorrectCount = 0;
+    this.chainedCount = 0;
   }
 
   @Action({ rawError: true })

@@ -8,28 +8,40 @@
       <el-row class="voice" type="flex" justify="space-around" align="middle">
         <el-col :span="7">
           <div>
-            正解数: {{correctCount}} / {{correctCount + incorrectCount}}
-          </div>
-          <div>
-            連続正解数: {{chainedCount}}
+            SCORE: <number :number="score"></number>
           </div>
         </el-col>
         <el-col :span="8">
           <speaker
             :text="question.question"
-            @click="provideQuestion"
+            :disabled="spokeExceeded"
+            @spoke="provideQuestion"
           />
         </el-col>
         <el-col :span="7">
-          <time-indicator :progress="timeProgress" />
+          <el-row type="flex" align="middle">
+            <el-col :span="-1" style="padding-right: .25rem">TIME:</el-col>
+            <el-col><time-indicator :progress="timeProgress" /></el-col>
+          </el-row>
         </el-col>
       </el-row>
+
       <question-panel
         :question="question"
         :disabled="!readyToAnswer"
         :shows-answer="timeIsUp"
         @on-selected="answered"
       />
+
+      <el-dialog title="The game is over..." :visible="visible" :show-close="false">
+        <div>
+          Your SCORE is: <number :number="score"></number>
+        </div>
+        <div slot="footer">
+          <el-button @click="close(false)">Exit</el-button>
+          <el-button type="primary" @click="close(true)">Retry</el-button>
+        </div>
+      </el-dialog>
     </el-main>
   </el-container>
 </template>
@@ -39,38 +51,50 @@
   import Question from '@/entities/question';
   import ActionState from '@/enums/actionState';
   import $spreadsheet from '@/store/spreadsheet';
+  import $records from '@/store/records';
+  import $settings from '@/store/settings';
   import $quiz from '@/store/quiz';
   import $timer from '@/store/timer';
   import TimeIndicator from '@/components/TimeIndicator.vue';
   import Speaker from '@/components/Speaker.vue';
   import QuestionPanel from '@/components/QuestionPanel.vue';
+  import Number from '@/components/Number.vue';
 
   @Component({
     components: {
       TimeIndicator,
       Speaker,
-      QuestionPanel
+      QuestionPanel,
+      Number
     }
   })
   export default class Quiz extends Vue {
     private question: Question | null = null;
+
+    private sheetId = '';
     private sheetName = '';
+
+    private visible = false;
+
+    private spokeExceeded = false;
+    private spokeCount = 0;
 
     // noinspection JSUnusedGlobalSymbols
     mounted() {
       const sheetId: string = this.$route.params.sheetId as string;
       const sheet = $spreadsheet.sheets.find(t => t.sheetId === sheetId);
       if (sheet) {
+        this.sheetId = sheet.sheetId;
         this.sheetName = sheet.sheetName;
-        $timer.SET_DURATION(3000);
+        $timer.SET_DURATION($settings.answerTime * 1000);
         $quiz.INITIALIZE(sheet.words);
       } else {
         this.$router.replace({ name: 'Top', query: { error: `Sheet ID '${sheetId}' is not found.` } });
       }
     }
 
-    get timeProgress(): number {
-      return $timer.timeProgress;
+    get numberOfRepeatQuestion(): number {
+      return $settings.numberOfRepeatQuestion;
     }
 
     get actionState(): ActionState {
@@ -85,16 +109,12 @@
       return $quiz.actionState === ActionState.TIME_IS_UP;
     }
 
-    get correctCount(): number {
+    get score(): number {
       return $quiz.correctCount;
     }
 
-    get incorrectCount(): number {
-      return $quiz.incorrectCount;
-    }
-
-    get chainedCount(): number {
-      return $quiz.chainedCount;
+    get timeProgress(): number {
+      return $timer.timeProgress;
     }
 
     @Watch('actionState', { immediate: true })
@@ -102,6 +122,8 @@
       switch (value) {
         case ActionState.STANDBY:
           this.question = $quiz.question();
+          this.spokeExceeded = false;
+          this.spokeCount = 0;
           $timer.STOP_TIMER();
           $timer.RESET_TIMER();
           break;
@@ -120,15 +142,43 @@
     checkTimeIsUp(value: number) {
       if (value >= 1.0) {
         $quiz.answer(null);
+        $records.UPDATE_CHAINED_COUNT({
+          sheetId: this.sheetName,
+          newChainedCount: this.score
+        });
+        this.visible = true;
       }
     }
 
     provideQuestion() {
       $quiz.PROVIDE_QUESTION();
+
+      this.spokeCount += 1;
+      if (this.spokeCount >= $settings.numberOfRepeatQuestion) {
+        this.spokeExceeded = true;
+      }
     }
 
     answered(isCorrect: boolean) {
       $quiz.answer(isCorrect);
+
+      if (!isCorrect) {
+        $records.UPDATE_CHAINED_COUNT({
+          sheetId: this.sheetId,
+          newChainedCount: this.score
+        });
+        this.visible = true;
+      }
+    }
+
+    close(isRetry: boolean) {
+      if (!isRetry) {
+        this.$router.back()
+        return;
+      }
+
+      $quiz.RESET();
+      this.visible = false;
     }
   }
 </script>

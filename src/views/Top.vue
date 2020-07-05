@@ -19,6 +19,7 @@
       <sheet-list
         :visible="!dialogVisibility.importSpreadsheet"
         :spreadsheet="spreadsheet"
+        :records="records"
         @navigate-to-game="navigateToGame"
       ></sheet-list>
 
@@ -39,8 +40,10 @@
 
 <script lang="ts">
   import { Component, Vue } from 'vue-property-decorator';
+  import Record from '@/entities/record';
   import Setting from '@/entities/setting';
   import $spreadsheet, { SpreadsheetState } from '@/store/spreadsheet';
+  import $records from '@/store/records';
   import $settings from '@/store/settings';
   import SpreadsheetPanel from '@/components/SpreadsheetPanel.vue';
   import SheetList from '@/components/SheetList.vue';
@@ -78,11 +81,15 @@
       };
     }
 
+    get records(): Array<Record> {
+      return $records.records;
+    }
+
     get settings(): Setting {
       return {
         gameMode: $settings.gameMode,
         answerTime: $settings.answerTime,
-        repeatQuestion: $settings.repeatQuestion,
+        numberOfRepeatQuestion: $settings.numberOfRepeatQuestion,
         numberOfQuestions: $settings.numberOfQuestions
       };
     }

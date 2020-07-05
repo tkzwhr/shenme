@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="Settings" :visible="visible" @close="close(false)">
+  <el-dialog title="Settings" :visible="visible" :show-close="false">
     <el-form ref="form" :model="newSettings" label-width="160px">
       <el-form-item label="Mode">
         <el-radio-group v-model="newSettings.gameMode">
@@ -20,7 +20,7 @@
       </el-form-item>
       <el-form-item label="Repeat question" v-if="isNotTrainingMode">
         <el-input-number
-          v-model="newSettings.repeatQuestion"
+          v-model="newSettings.numberOfRepeatQuestion"
           :min="1"
           :max="5"
         ></el-input-number>
