@@ -61,7 +61,7 @@ class QuizModule extends VuexModule implements QuizState {
   }
 
   get accuracy(): number {
-    return Math.floor(this.correctCount + this.answeredCount * 1000) / 10;
+    return Math.floor((this.correctCount / this.answeredCount) * 1000) / 10;
   }
 
   @Mutation

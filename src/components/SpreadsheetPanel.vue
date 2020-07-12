@@ -71,9 +71,3 @@ export default class SpreadsheetPanel extends Vue {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.a-container {
-  padding: 1rem;
-}
-</style>

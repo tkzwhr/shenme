@@ -24,7 +24,7 @@ export default class AnswersPanel extends Vue {
   @Prop() private readonly options!: Array<string>;
   @Prop() private readonly correct!: string | null;
 
-  @Emit() answered(value: any): any {
+  @Emit() answered(value: string): string {
     return value;
   }
 

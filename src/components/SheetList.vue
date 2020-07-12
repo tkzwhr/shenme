@@ -11,6 +11,7 @@
         </span>
         <template v-else>
           <a
+            href="#"
             @click="
               e => {
                 e.preventDefault();
@@ -65,9 +66,3 @@ export default class SheetList extends Vue {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.a-container {
-  padding: 1rem;
-}
-</style>

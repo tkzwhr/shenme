@@ -81,7 +81,7 @@ import { GameModeEnum } from "@/enums/gameMode";
 
 @Component
 export default class SettingsModal extends Vue {
-  readonly GameModeEnum = GameModeEnum;
+  private readonly GameModeEnum = GameModeEnum;
 
   @Prop() private readonly settings!: SettingsView;
 
