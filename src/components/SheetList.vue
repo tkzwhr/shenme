@@ -1,89 +1,68 @@
 <template>
-  <el-table
-    v-if="visible && spreadsheet.url !== null"
-    :data="spreadsheet.sheets"
-    height="30vh"
-  >
-    <el-table-column label="Sheet Name">
-      <template slot-scope="scope">
-        <div v-if="scope.row.fetchingErrors.length > 0">
-          <el-tooltip
-            :content="scope.row.fetchingErrors.join('\n')"
-            placement="top"
+  <b-table :data="sheets" striped narrowed mobile-cards>
+    <template slot-scope="props">
+      <b-table-column field="sheetName" label="Sheet Name">
+        <span v-if="props.row.error">
+          {{ props.row.sheetName }}
+          <b-tag type="is-warning">
+            <b-icon icon="alert-circle" size="is-small"></b-icon>
+            {{ props.row.error }}
+          </b-tag>
+        </span>
+        <template v-else>
+          <a
+            href="#"
+            @click="
+              e => {
+                e.preventDefault();
+                select(props.row.sheetId);
+              }
+            "
           >
-            <span>
-              <i class="el-icon-warning"></i>
-              <span style="color: darkgrey">
-                {{ scope.row.sheetName }}
-              </span>
-            </span>
-          </el-tooltip>
-        </div>
-        <a v-else href="#" @click="e => navigateToGame(e, scope.row.sheetId)">{{
-          scope.row.sheetName
-        }}</a>
-      </template>
-    </el-table-column>
-    <el-table-column
-      label="Number of Words"
-      prop="words.length"
-      align="right"
-    ></el-table-column>
-    <el-table-column align="right" label="Played Count">
-      <template slot-scope="scope">
-        {{ playedCount(scope.row.sheetId) }}
-      </template>
-    </el-table-column>
-    <el-table-column align="right" label="Accuracy">
-      <template slot-scope="scope">
-        {{ accuracy(scope.row.sheetId) }} %
-      </template>
-    </el-table-column>
-    <el-table-column align="right" label="Chained Count">
-      <template slot-scope="scope">
-        {{ chainedCount(scope.row.sheetId) }}
-      </template>
-    </el-table-column>
-  </el-table>
+            {{ props.row.sheetName }}
+          </a>
+          <b-icon v-if="props.row.loading" icon="sync" size="is-small"></b-icon>
+        </template>
+      </b-table-column>
+      <b-table-column field="numOfWords" label="Number of Words" numeric>
+        <template v-if="!props.row.loading">
+          {{ props.row.numOfWords }}
+        </template>
+      </b-table-column>
+      <b-table-column field="playCount" label="Play Count" numeric>
+        <template v-if="!props.row.loading">
+          {{ props.row.playCount }}
+        </template>
+      </b-table-column>
+      <b-table-column field="accuracy" label="Accuracy" numeric>
+        <template v-if="!props.row.loading">
+          {{
+            props.row.accuracy
+              ? Math.floor(props.row.accuracy * 1000) / 10
+              : "-"
+          }}
+          %
+        </template>
+      </b-table-column>
+      <b-table-column field="chainedCount" label="Chained Count" numeric>
+        <template v-if="!props.row.loading">
+          {{ props.row.chainedCount ? props.row.chainedCount : "-" }}
+        </template>
+      </b-table-column>
+    </template>
+  </b-table>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Emit } from "vue-property-decorator";
-import { SpreadsheetState } from "@/store/spreadsheet";
-import Record from "@/entities/record";
+import { Component, Emit, Prop, Vue } from "vue-property-decorator";
+import { SheetListRowView } from "@/components/views.type";
 
 @Component
 export default class SheetList extends Vue {
-  @Prop() private readonly visible!: boolean;
-  @Prop() private readonly spreadsheet!: SpreadsheetState;
-  @Prop() private readonly records!: Array<Record>;
+  @Prop() private readonly sheets!: Array<SheetListRowView>;
 
-  playedCount(sheetId: string): string {
-    const record = this.records.find(t => t.sheetId === sheetId);
-    return record ? record.playedCount.toString() : "0";
-  }
-
-  accuracy(sheetId: string): string {
-    const record = this.records.find(t => t.sheetId === sheetId);
-    return record?.accuracy ? (record.accuracy * 100).toString() : "-";
-  }
-
-  chainedCount(sheetId: string): string {
-    const record = this.records.find(t => t.sheetId === sheetId);
-    return record?.chainedCount ? record.chainedCount.toString() : "-";
-  }
-
-  @Emit()
-  navigateToGame(e: MouseEvent, sheetId: string) {
-    e.preventDefault();
+  @Emit() select(sheetId: string): string {
     return sheetId;
   }
 }
 </script>
-
-<style>
-/* noinspection CssUnusedSymbol */
-.custom-icon {
-  font-size: 10vh;
-}
-</style>

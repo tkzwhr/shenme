@@ -7,7 +7,7 @@ import {
 } from "vuex-module-decorators";
 import axios from "axios";
 import store from "./index";
-import Word from "@/entities/word";
+import Word from "@/models/word";
 
 export interface SpreadsheetSheetState {
   fetching: boolean;
@@ -31,7 +31,7 @@ export interface SpreadsheetState {
   namespaced: true,
   preserveState: localStorage.getItem("vuex") !== null
 })
-class Spreadsheet extends VuexModule implements SpreadsheetState {
+class SpreadsheetModule extends VuexModule implements SpreadsheetState {
   fetching = false;
   fetchingErrors: Array<string> = [];
   url: string | null = null;
@@ -166,5 +166,5 @@ class Spreadsheet extends VuexModule implements SpreadsheetState {
   }
 }
 
-const $spreadsheet = getModule(Spreadsheet, store);
+const $spreadsheet = getModule(SpreadsheetModule, store);
 export default $spreadsheet;

@@ -1,7 +1,7 @@
-enum GameMode {
-  TRAINING = "Training",
-  MARATHON = "Marathon",
-  EXAMINATION = "Examination"
-}
+export type GameMode = "TRAINING" | "MARATHON" | "EXAMINATION";
 
-export default GameMode;
+export enum GameModeEnum {
+  TRAINING = "TRAINING",
+  MARATHON = "MARATHON",
+  EXAMINATION = "EXAMINATION"
+}

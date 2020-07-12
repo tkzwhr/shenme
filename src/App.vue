@@ -1,31 +1,81 @@
 <template>
-  <router-view />
+  <div>
+    <nav-bar
+      :title="title"
+      @settings="showSettingsModal"
+      @back="$router.back()"
+    ></nav-bar>
+    <router-view />
+  </div>
 </template>
 
-<script>
-export default {
-  name: "app"
-};
+<script lang="ts">
+import { Component, Vue } from "vue-property-decorator";
+import $settings from "@/store/settings";
+import $spreadsheet from "@/store/spreadsheet";
+import * as SettingTranslator from "@/view-translator/settings";
+import NavBar from "@/components/NavBar.vue";
+import SettingModal from "@/components/Settings.modal.vue";
+import { SettingsView } from "@/components/views.type";
+
+Component.registerHooks([
+  "beforeRouteEnter",
+  "beforeRouteUpdate",
+  "beforeRouteLeave"
+]);
+
+@Component({
+  components: {
+    NavBar
+  }
+})
+export default class App extends Vue {
+  private readonly settings$ = $settings;
+  private readonly spreadsheet$ = $spreadsheet;
+
+  get title(): string {
+    const sheetId = this.$route.params.sheetId as string | undefined;
+    const spreadsheet = this.spreadsheet$.sheets.find(
+      t => t.sheetId === sheetId
+    );
+    return spreadsheet?.sheetName ?? "";
+  }
+  get settings(): SettingsView {
+    return SettingTranslator.modelToView(this.settings$);
+  }
+
+  showSettingsModal() {
+    this.$buefy.modal.open({
+      parent: this,
+      component: SettingModal,
+      hasModalCard: true,
+      trapFocus: true,
+      props: {
+        settings: this.settings
+      },
+      events: {
+        apply: (newSetting: SettingsView) => {
+          const model = SettingTranslator.viewToModel(newSetting);
+          if (model) {
+            this.settings$.UPDATE(model);
+          }
+        }
+      }
+    });
+  }
+}
 </script>
 
 <style lang="scss">
-.el-container {
-  font-family: sans-serif;
-  height: 100%;
-  justify-content: center;
-  align-items: center;
-}
+.a-container {
+  padding: 1rem;
 
-.el-main {
-  flex: none !important;
-  width: 90%;
-}
+  > * {
+    margin-bottom: 1rem;
 
-.nav {
-  position: absolute;
-  top: 0;
-  width: 100vw;
-  padding: 20px !important;
-  font-weight: bold;
+    & :last-child {
+      margin-bottom: 0;
+    }
+  }
 }
 </style>

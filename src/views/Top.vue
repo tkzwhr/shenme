@@ -1,113 +1,91 @@
 <template>
-  <el-container>
-    <el-header class="nav">
-      <el-row type="flex" align="middle">
-        <el-col>Shenme</el-col>
-        <el-col :span="-1">
-          <el-button
-            icon="el-icon-setting"
-            circle
-            @click="dialogVisibility.settings = true"
-          ></el-button>
-        </el-col>
-      </el-row>
-    </el-header>
-
-    <el-main>
-      <spreadsheet-panel
-        :spreadsheet-url="spreadsheet$.url"
-        @sync="syncSpreadsheet"
-        @truncate="deleteSpreadsheet"
-      ></spreadsheet-panel>
-
-      <sheet-list
-        :visible="!dialogVisibility.importSpreadsheet"
-        :spreadsheet="spreadsheet$"
-        :records="records$.records"
-        @navigate-to-game="navigateToGame"
-      ></sheet-list>
-
-      <import-spreadsheet-form
-        :visible="dialogVisibility.importSpreadsheet"
-        :spreadsheet="spreadsheet$"
-        @close="dialogVisibility.importSpreadsheet = false"
-      ></import-spreadsheet-form>
-
-      <settings-form
-        :visible="dialogVisibility.settings"
-        :settings="settings"
-        @close="handleSettings"
-      ></settings-form>
-    </el-main>
-  </el-container>
+  <div class="a-container">
+    <spreadsheet-panel
+      class="spreadsheet-panel"
+      :url="url"
+      :validator="/^https:\/\/docs.google.com\/spreadsheets\/d\/([^/]+)\/.*$/"
+      @sync="syncWithSpreadsheet"
+      @unlink="confirmToUnlinkSpreadsheet"
+    ></spreadsheet-panel>
+    <sheet-list
+      v-if="url"
+      :sheets="sheets"
+      @select="navigateToGame"
+    ></sheet-list>
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import Setting from "@/entities/setting";
 import $spreadsheet from "@/store/spreadsheet";
 import $records from "@/store/records";
-import $settings from "@/store/settings";
+import * as SheetListRowTranslator from "@/view-translator/sheetListRow";
+import NavBar from "@/components/NavBar.vue";
 import SpreadsheetPanel from "@/components/SpreadsheetPanel.vue";
 import SheetList from "@/components/SheetList.vue";
-import ImportSpreadsheetForm from "@/components/ImportSpreadsheetForm.vue";
-import SettingsForm from "@/components/SettingsForm.vue";
+import SettingModal from "@/components/Settings.modal.vue";
+import { SheetListRowView } from "@/components/views.type";
 
 @Component({
   components: {
+    NavBar,
     SpreadsheetPanel,
     SheetList,
-    ImportSpreadsheetForm,
-    SettingsForm
+    SettingModal
   }
 })
 export default class Top extends Vue {
   private readonly spreadsheet$ = $spreadsheet;
   private readonly records$ = $records;
-  private readonly settings$ = $settings;
 
-  private dialogVisibility = {
-    importSpreadsheet: false,
-    settings: false
-  };
+  get url(): string | null {
+    return this.spreadsheet$.url;
+  }
+  get sheets(): Array<SheetListRowView> {
+    return this.spreadsheet$.sheets.map(s =>
+      SheetListRowTranslator.modelToView(s, this.records$.records)
+    );
+  }
 
   // noinspection JSUnusedGlobalSymbols
   mounted() {
-    if (this.$route.query.error) {
-      (this as any).$message.error(this.$route.query.error as string);
+    if (typeof this.$route.query.error === "string") {
+      this.$buefy.toast.open({
+        duration: 3000,
+        message: this.$route.query.error,
+        type: "is-danger"
+      });
       this.$router.replace({ name: "Top" });
     }
-  }
-
-  get settings(): Setting {
-    return {
-      gameMode: this.settings$.gameMode,
-      answerTime: this.settings$.answerTime,
-      numberOfRepeatQuestion: this.settings$.numberOfRepeatQuestion,
-      numberOfQuestions: this.settings$.numberOfQuestions
-    };
-  }
-
-  syncSpreadsheet(spreadsheetId: string) {
-    this.dialogVisibility.importSpreadsheet = true;
-    this.spreadsheet$.fetch(spreadsheetId);
-  }
-
-  deleteSpreadsheet() {
-    this.spreadsheet$.DELETE();
-    this.records$.DELETE();
   }
 
   navigateToGame(sheetId: string) {
     this.$router.push({ name: "Quiz", params: { sheetId } });
   }
 
-  handleSettings(value: Setting | null) {
-    this.dialogVisibility.settings = false;
+  async syncWithSpreadsheet(spreadsheetId: string) {
+    await this.spreadsheet$.fetch(spreadsheetId);
+  }
 
-    if (value) {
-      this.settings$.UPDATE(value);
-    }
+  confirmToUnlinkSpreadsheet() {
+    this.$buefy.dialog.confirm({
+      title: "Unlink spreadsheet",
+      message:
+        "Are you sure you want to unlink your spreadsheet? <b>All records</b> will be deleted and this action cannot be undone.",
+      confirmText: "Unlink",
+      type: "is-danger",
+      hasIcon: true,
+      onConfirm: () => {
+        this.spreadsheet$.DELETE();
+        this.records$.DELETE();
+      }
+    });
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.spreadsheet-panel {
+  margin-top: 2rem;
+}
+</style>
