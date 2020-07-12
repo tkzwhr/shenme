@@ -8,12 +8,12 @@
         v-if="settings$.gameMode === GameModeEnum.MARATHON"
         class="level-left is-vcentered"
       >
-        Score: {{ quiz$.correctCount }}
+        Chained Count : {{ quiz$.correctCount }}
       </div>
       <div v-else class="level-left is-vcentered">
         <div class="level is-mobile">
-          <div class="level-left is-vcentered">
-            Answered:
+          <div class="level-left is-vcentered answered">
+            Answered :
           </div>
           <div class="level-right is-vcentered">
             <b-progress
@@ -60,7 +60,6 @@ import $settings from "@/store/settings";
 import $quiz from "@/store/quiz";
 import $speech from "@/store/speech";
 import $timer from "@/store/timer";
-import NavBarBack from "@/components/NavBarBack.vue";
 import Speaker from "@/components/Speaker.vue";
 import TimeProgress from "@/components/TimeProgress.vue";
 import AnswersPanel from "@/components/AnswersPanel.vue";
@@ -68,7 +67,6 @@ import GameOverModal from "@/components/GameOver.modal.vue";
 
 @Component({
   components: {
-    NavBarBack,
     Speaker,
     TimeProgress,
     AnswersPanel
@@ -121,15 +119,20 @@ export default class Quiz extends Vue {
     next();
   }
 
+  beforeRouteLeave(to: any, from: any, next: (vm?: any) => void) {
+    this.timer$.STOP_TIMER();
+    next();
+  }
+
   // noinspection JSUnusedGlobalSymbols
   mounted() {
     this.window = window;
-    this.timer$.SET_DURATION(this.settings$.answerTime * 1000);
     const { words } = this.spreadsheet$.sheets.find(
       t => t.sheetId === this.spreadsheetId
     ) ?? { words: [] };
     this.quiz$.INITIALIZE(words);
     this.speech$.initialize(this.quiz$.question.question);
+    this.timer$.INITIALIZE(this.settings$.answerTime * 1000);
   }
 
   @Watch("speech$.spokenCount", { immediate: true })
@@ -141,6 +144,7 @@ export default class Quiz extends Vue {
 
   @Watch("timer$.expired", { immediate: true })
   onExpired(expired: boolean) {
+    this.timer$.STOP_TIMER();
     if (this.settings$.gameMode !== GameModeEnum.TRAINING && expired) {
       this.quiz$.TIME_IS_UP();
       this.judge();
@@ -198,12 +202,15 @@ export default class Quiz extends Vue {
 
   private showGameOverModal() {
     let message = "";
+    let score = "";
     switch (this.settings$.gameMode) {
       case GameModeEnum.MARATHON:
-        message = `Your chained cound is <b>${this.quiz$.correctCount}</b>`;
+        message = `Your chained count is`;
+        score = `${this.quiz$.correctCount}`;
         break;
       case GameModeEnum.EXAMINATION:
-        message = `Your accuracy is <b>${this.quiz$.accuracy}%</b>`;
+        message = `Your accuracy is`;
+        score = `${this.quiz$.accuracy}%`;
         break;
       default:
         break;
@@ -217,7 +224,8 @@ export default class Quiz extends Vue {
       trapFocus: true,
       canCancel: false,
       props: {
-        message: message
+        message,
+        score
       },
       events: {
         retry: () => {
@@ -241,5 +249,8 @@ export default class Quiz extends Vue {
 .answer {
   font-size: 120%;
   padding: 1rem 0;
+}
+.answered {
+  margin-right: 4px;
 }
 </style>

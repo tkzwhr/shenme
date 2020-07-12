@@ -4,7 +4,9 @@
       <p class="modal-card-title">Game is over</p>
     </header>
     <section class="modal-card-body">
-      {{ message }}
+      <span>{{ message }}</span>
+      &nbsp;
+      <span class="score">{{ score }}</span>
     </section>
     <footer class="modal-card-foot">
       <button
@@ -40,6 +42,7 @@ import { Component, Prop, Emit, Vue } from "vue-property-decorator";
 @Component
 export default class GameOverModal extends Vue {
   @Prop() private readonly message!: string;
+  @Prop() private readonly score!: string;
 
   @Emit() retry() {
     return;
@@ -57,5 +60,9 @@ export default class GameOverModal extends Vue {
 <style lang="scss" scoped>
 .modal-card {
   width: auto;
+}
+.score {
+  font-weight: bold;
+  font-size: 200%;
 }
 </style>

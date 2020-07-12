@@ -42,8 +42,10 @@ class TimerModule extends VuexModule implements TimerState {
   }
 
   @Mutation
-  SET_DURATION(payload: number) {
+  INITIALIZE(payload: number) {
     this.duration = payload;
+    this.beginDate = null;
+    this.currentDate = null;
   }
 
   @Mutation

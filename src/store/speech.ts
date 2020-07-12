@@ -45,8 +45,8 @@ class SpeechModule extends VuexModule implements SpeechState {
 
   @Action
   initialize(text: string) {
+    this.context.commit("SET_TEXT", text);
     const speech = (this.context.state as SpeechState).speech;
-    speech.text = text;
     speech.lang = "zh-CN";
     speech.onstart = () => {
       this.context.commit("SPEAK");

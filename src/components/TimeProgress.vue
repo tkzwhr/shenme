@@ -1,7 +1,7 @@
 <template>
   <div class="level is-mobile">
-    <div class="level-left is-vcentered">
-      Time:
+    <div class="level-left is-vcentered time">
+      Time :
     </div>
     <div class="level-right is-vcentered">
       <b-progress
@@ -33,9 +33,12 @@ export default class TimeProgress extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .prog {
   width: 10rem;
+}
+.time {
+  margin-right: 4px;
 }
 progress {
   transition: all 0.2s linear;
