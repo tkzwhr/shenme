@@ -53,7 +53,7 @@
 
 <script lang="ts">
 import { Component, Prop, Emit, Watch, Vue } from "vue-property-decorator";
-import Question from "@/entities/question";
+import Question from "@/models/question";
 
 @Component
 export default class QuestionPanel extends Vue {
@@ -64,7 +64,7 @@ export default class QuestionPanel extends Vue {
   private selected?: string;
 
   @Watch("question")
-  reset() {
+  onQuestionChanged() {
     this.selected = undefined;
   }
 

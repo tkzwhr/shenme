@@ -5,7 +5,7 @@ import {
   getModule
 } from "vuex-module-decorators";
 import store from "./index";
-import Record from "@/entities/record";
+import Record from "@/models/record";
 
 export interface RecordsState {
   records: Array<Record>;
@@ -18,7 +18,7 @@ export interface RecordsState {
   namespaced: true,
   preserveState: localStorage.getItem("vuex") !== null
 })
-class Records extends VuexModule implements RecordsState {
+class RecordsModule extends VuexModule implements RecordsState {
   records: Array<Record> = [];
 
   @Mutation
@@ -62,5 +62,5 @@ class Records extends VuexModule implements RecordsState {
   }
 }
 
-const $records = getModule(Records, store);
+const $records = getModule(RecordsModule, store);
 export default $records;

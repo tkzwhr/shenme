@@ -1,103 +1,79 @@
 <template>
-  <div class="header">
-    <div>
-      Google Spreadsheet url
-    </div>
-    <div class="spreadsheet-url">
-      <el-input
-        v-model="newSheetUrl"
-        :readonly="spreadsheetUrl !== null"
-        placeholder="https://docs.google.com/spreadsheets/d/abcdefghijklmnopqrstuvwxyz1234567890/edit#gid=0"
-        @input="validate"
-      ></el-input>
-    </div>
-    <div v-if="spreadsheetUrl === null">
-      <el-tooltip
-        v-if="malformed"
-        class="item"
-        effect="dark"
-        content="Input url is not Google Spreadsheet url."
-        placement="top"
+  <section>
+    <template v-if="url === null">
+      <b-field
+        label="Spreadsheet url"
+        label-position="on-border"
+        :type="isMalformed ? 'is-danger' : null"
       >
-        <el-button disabled>Sync</el-button>
-      </el-tooltip>
-      <el-button v-else type="primary" @click="checkSync">Sync</el-button>
-    </div>
-    <div v-else>
-      <el-button @click="checkSync" class="button-margin-right"
-        >Re-Sync</el-button
-      >
-      <el-popconfirm
-        title="All data will be lost. This operation cannot be undone. Do you really continue?"
-        confirm-button-text="Delete"
-        confirm-button-type="danger"
-        cancel-button-text="Cancel"
-        icon="el-icon-info"
-        icon-color="red"
-        @onConfirm="truncate"
-      >
-        <el-button slot="reference" type="danger">Delete</el-button>
-      </el-popconfirm>
-    </div>
-  </div>
+        <b-input
+          v-model="editedUrl"
+          placeholder="https://docs.google.com/spreadsheets/d/Abcdefghijklmnopqrstuvwxyz1234567890/edit"
+          expanded
+          @input="validate"
+        ></b-input>
+        <p class="control">
+          <button
+            class="button is-primary"
+            :disabled="editedUrl.length === 0 || isMalformed"
+            @click="sync"
+          >
+            Link and Sync
+          </button>
+        </p>
+      </b-field>
+      <p v-if="isMalformed" class="has-text-danger is-small">
+        Input url is malformed
+      </p>
+    </template>
+    <b-field v-else label="Spreadsheet url" label-position="on-border">
+      <b-input
+        readonly
+        expanded
+        icon-right="sync"
+        icon-right-clickable
+        @icon-right-click="sync"
+        :value="url"
+      ></b-input>
+      <p class="control">
+        <button class="button is-danger" @click="unlink">Unlink</button>
+      </p>
+    </b-field>
+  </section>
 </template>
 
 <script lang="ts">
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import { Component, Prop, Emit, Vue } from "vue-property-decorator";
-
-dayjs.extend(relativeTime);
 
 @Component
 export default class SpreadsheetPanel extends Vue {
-  @Prop() private readonly spreadsheetUrl!: string | null;
+  @Prop() private readonly url!: string | null;
+  @Prop() private readonly validator!: RegExp | null;
 
-  private newSheetUrl: string = this.spreadsheetUrl ?? "";
-  private malformed = false;
+  @Emit() sync(): string | null {
+    return this.spreadsheetId;
+  }
+  @Emit() unlink() {
+    return;
+  }
 
-  extractSpreadsheetId(url: string): string | null {
-    const result = url.match(
-      /^https:\/\/docs.google.com\/spreadsheets\/d\/([^/]+)\/.*$/
-    );
+  private editedUrl = this.url ?? "";
+  private isMalformed = false;
+
+  get spreadsheetId(): string | null {
+    const url = this.url ?? this.editedUrl;
+    const result = this.validator && url.match(this.validator);
     return (result ?? [null, null])[1];
   }
 
-  validate(url: string) {
-    this.malformed = this.extractSpreadsheetId(url) === null;
-  }
-
-  checkSync() {
-    const spreadsheetId = this.extractSpreadsheetId(this.newSheetUrl);
-    if (spreadsheetId) {
-      this.sync(spreadsheetId);
-    }
-  }
-
-  @Emit()
-  sync(value: string) {
-    return value;
-  }
-
-  @Emit()
-  truncate() {
-    return null;
+  validate() {
+    this.isMalformed = this.spreadsheetId === null;
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-.spreadsheet-url {
-  flex: auto;
-  margin-left: 1rem;
-  margin-right: 2rem;
-}
-.button-margin-right {
-  margin-right: 10px;
+.a-container {
+  padding: 1rem;
 }
 </style>

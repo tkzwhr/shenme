@@ -1,100 +1,77 @@
 <template>
-  <el-container>
-    <el-header class="nav">
-      <el-page-header @back="$router.back()" :content="sheetName">
-      </el-page-header>
-    </el-header>
-    <el-main v-if="question !== null">
-      <el-row class="voice" type="flex" justify="space-around" align="middle">
-        <el-col :span="7">
-          <div v-if="settings$.gameMode === GameMode.MARATHON">
-            SCORE: <number :number="quiz$.correctCount"></number>
-          </div>
-          <div v-else-if="settings$.gameMode === GameMode.EXAMINATION">
-            <el-row type="flex" align="middle">
-              <el-col :span="-1" class="panel-label">PROGRESS:</el-col>
-              <el-col
-                ><el-progress :percentage="examProgress"></el-progress
-              ></el-col>
-            </el-row>
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <speaker
-            :text="question.question"
-            :disabled="spokeExceeded"
-            @spoke="provideQuestion"
-          />
-        </el-col>
-        <el-col :span="7">
-          <el-row
-            v-if="settings$.gameMode !== GameMode.TRAINING"
-            type="flex"
-            align="middle"
-          >
-            <el-col :span="-1" class="panel-label">TIME:</el-col>
-            <el-col><time-indicator :progress="timer$.timeProgress"/></el-col>
-          </el-row>
-        </el-col>
-      </el-row>
-
-      <question-panel
-        :question="question"
-        :disabled="quiz$.actionState !== ActionState.PROVIDED_QUESTION"
-        :shows-answer="quiz$.actionState === ActionState.TIME_IS_UP"
-        @on-selected="answered"
-      />
-
-      <el-dialog
-        title="The game is over..."
-        :visible="visible"
-        :show-close="false"
+  <div class="a-container">
+    <div
+      v-if="settings$.gameMode !== GameModeEnum.TRAINING"
+      class="level has-text-weight-bold"
+    >
+      <div
+        v-if="settings$.gameMode === GameModeEnum.MARATHON"
+        class="level-left is-vcentered"
       >
-        <div v-if="settings$.gameMode === GameMode.MARATHON" class="result">
-          Your SCORE is: <number :number="quiz$.correctCount"></number>
+        Score: {{ quiz$.correctCount }}
+      </div>
+      <div v-else class="level-left is-vcentered">
+        <div class="level is-mobile">
+          <div class="level-left is-vcentered">
+            Answered:
+          </div>
+          <div class="level-right is-vcentered">
+            <b-progress
+              type="is-primary"
+              :value="examProgress"
+              size="is-small"
+            ></b-progress>
+          </div>
         </div>
-        <div
-          v-else-if="settings$.gameMode === GameMode.EXAMINATION"
-          class="result"
-        >
-          Your accuracy is:
-          <number
-            :number="
-              Math.floor((quiz$.correctCount / quiz$.answeredCount) * 100)
-            "
-          ></number>
-          %
-        </div>
-        <div slot="footer">
-          <el-button @click="close(false)">Exit</el-button>
-          <el-button type="primary" @click="close(true)">Retry</el-button>
-        </div>
-      </el-dialog>
-    </el-main>
-  </el-container>
+      </div>
+      <div class="level-right is-vcentered">
+        <time-progress
+          :progress="Math.floor(100 - timer$.elapsedTimeRatio * 100)"
+        ></time-progress>
+      </div>
+    </div>
+    <div class="has-text-centered question">
+      <speaker
+        :disabled="!canSpeak"
+        :is-speaking="speech$.isSpeaking"
+        @speak="speech$.speak(window)"
+      ></speaker>
+    </div>
+    <answers-panel
+      :disabled="!canAnswer"
+      :options="quiz$.question.options"
+      :correct="
+        quiz$.actionState === ActionState.ANSWERED
+          ? quiz$.question.answer
+          : null
+      "
+      @answered="answered"
+    ></answers-panel>
+  </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Watch } from "vue-property-decorator";
-import Question from "@/entities/question";
-import GameMode from "@/enums/gameMode";
+import { GameModeEnum } from "@/enums/gameMode";
 import ActionState from "@/enums/actionState";
 import $spreadsheet from "@/store/spreadsheet";
 import $records from "@/store/records";
 import $settings from "@/store/settings";
 import $quiz from "@/store/quiz";
+import $speech from "@/store/speech";
 import $timer from "@/store/timer";
-import TimeIndicator from "@/components/TimeIndicator.vue";
+import NavBarBack from "@/components/NavBarBack.vue";
 import Speaker from "@/components/Speaker.vue";
-import QuestionPanel from "@/components/QuestionPanel.vue";
-import Number from "@/components/Number.vue";
+import TimeProgress from "@/components/TimeProgress.vue";
+import AnswersPanel from "@/components/AnswersPanel.vue";
+import GameOverModal from "@/components/GameOver.modal.vue";
 
 @Component({
   components: {
-    TimeIndicator,
+    NavBarBack,
     Speaker,
-    QuestionPanel,
-    Number
+    TimeProgress,
+    AnswersPanel
   }
 })
 export default class Quiz extends Vue {
@@ -102,144 +79,167 @@ export default class Quiz extends Vue {
   private readonly records$ = $records;
   private readonly settings$ = $settings;
   private readonly quiz$ = $quiz;
+  private readonly speech$ = $speech;
   private readonly timer$ = $timer;
-  private readonly GameMode = GameMode;
+  private readonly GameModeEnum = GameModeEnum;
   private readonly ActionState = ActionState;
 
-  private question: Question | null = null;
+  private window?: Window;
 
-  private sheetId = "";
-  private sheetName = "";
-
-  private visible = false;
-
-  private spokeExceeded = false;
-  private spokeCount = 0;
-
-  // noinspection JSUnusedGlobalSymbols
-  mounted() {
-    const sheetId: string = this.$route.params.sheetId as string;
-    const sheet = this.spreadsheet$.sheets.find(t => t.sheetId === sheetId);
-    if (sheet) {
-      this.sheetId = sheet.sheetId;
-      this.sheetName = sheet.sheetName;
-      this.timer$.SET_DURATION(this.settings$.answerTime * 1000);
-      this.quiz$.INITIALIZE(sheet.words);
-    } else {
-      this.$router.replace({
-        name: "Top",
-        query: { error: `Sheet ID '${sheetId}' is not found.` }
-      });
-    }
+  get spreadsheetId(): string {
+    return this.$route.params.sheetId as string;
   }
-
   get examProgress(): number {
     return Math.floor(
-      (this.quiz$.answeredCount / this.settings$.numberOfQuestions) * 100
+      (this.quiz$.answeredCount / this.settings$.numOfQuestions) * 100
+    );
+  }
+  get canSpeak(): boolean {
+    return (
+      this.quiz$.actionState === ActionState.PROVIDED_QUESTION &&
+      (this.settings$.gameMode === GameModeEnum.TRAINING ||
+        this.speech$.spokenCount < this.settings$.limitToListen)
+    );
+  }
+  get canAnswer(): boolean {
+    return (
+      this.quiz$.actionState === ActionState.PROVIDED_QUESTION &&
+      this.speech$.spokenCount > 0
     );
   }
 
-  @Watch("quiz$.actionState", { immediate: true })
-  setup(value: ActionState) {
-    switch (value) {
-      case ActionState.STANDBY:
-        this.question = this.quiz$.question();
-        this.spokeExceeded = false;
-        this.spokeCount = 0;
-        this.timer$.STOP_TIMER();
-        this.timer$.RESET_TIMER();
-        break;
-      case ActionState.PROVIDED_QUESTION:
-        this.timer$.runTimer();
-        break;
-      case ActionState.ANSWERED:
-        this.timer$.STOP_TIMER();
-        break;
-      default:
-        break;
-    }
-  }
-
-  @Watch("timer$.timeProgress", { immediate: true })
-  checkTimeIsUp(value: number) {
-    if (this.settings$.gameMode !== GameMode.TRAINING && value >= 1.0) {
-      this.quiz$.answer(null);
-      const isOver = this.checkGameIsOver(false);
-      if (isOver) {
-        this.visible = true;
-      }
-    }
-  }
-
-  provideQuestion() {
-    this.quiz$.PROVIDE_QUESTION();
-
-    this.spokeCount += 1;
-    if (
-      this.settings$.gameMode !== GameMode.TRAINING &&
-      this.spokeCount >= this.settings$.numberOfRepeatQuestion
-    ) {
-      this.spokeExceeded = true;
-    }
-  }
-
-  answered(isCorrect: boolean) {
-    this.quiz$.answer(isCorrect);
-
-    const isOver = this.checkGameIsOver(isCorrect);
-    if (isOver) {
-      this.visible = true;
-    }
-  }
-
-  checkGameIsOver(isCorrect: boolean): boolean {
-    let isOver = false;
-    switch (this.settings$.gameMode) {
-      case GameMode.MARATHON:
-        isOver = !isCorrect;
-        if (isOver) {
-          this.records$.UPDATE_CHAINED_COUNT({
-            sheetId: this.sheetId,
-            newChainedCount: this.quiz$.correctCount
-          });
-        }
-        break;
-      case GameMode.EXAMINATION:
-        isOver = this.examProgress >= 100;
-        if (isOver) {
-          this.records$.UPDATE_ACCURACY({
-            sheetId: this.sheetId,
-            newAccuracy: this.quiz$.correctCount / this.quiz$.answeredCount
-          });
-        }
-        break;
-      default:
-        break;
-    }
-    return isOver;
-  }
-
-  close(isRetry: boolean) {
-    if (!isRetry) {
-      this.$router.back();
+  beforeRouteEnter(to: any, from: any, next: (vm?: any) => void) {
+    const sheetId: string = to.params.sheetId;
+    const spreadsheet = $spreadsheet.sheets.find(t => t.sheetId === sheetId);
+    if (!spreadsheet) {
+      next({
+        name: "Top",
+        query: { error: `Sheet ID '${sheetId}' is not found.` }
+      });
       return;
     }
+    next();
+  }
 
-    this.quiz$.RESET();
-    this.visible = false;
+  // noinspection JSUnusedGlobalSymbols
+  mounted() {
+    this.window = window;
+    this.timer$.SET_DURATION(this.settings$.answerTime * 1000);
+    const { words } = this.spreadsheet$.sheets.find(
+      t => t.sheetId === this.spreadsheetId
+    ) ?? { words: [] };
+    this.quiz$.INITIALIZE(words);
+    this.speech$.initialize(this.quiz$.question.question);
+  }
+
+  @Watch("speech$.spokenCount", { immediate: true })
+  onSpoke(value: number) {
+    if (value === 1) {
+      this.timer$.runTimer();
+    }
+  }
+
+  @Watch("timer$.expired", { immediate: true })
+  onExpired(expired: boolean) {
+    if (this.settings$.gameMode !== GameModeEnum.TRAINING && expired) {
+      this.quiz$.TIME_IS_UP();
+      this.judge();
+    }
+  }
+
+  answered(answer: string) {
+    this.timer$.STOP_TIMER();
+    this.quiz$.ANSWER(answer);
+    this.judge();
+  }
+
+  judge() {
+    if (this.checkGameIsOver()) {
+      this.storeRecord();
+      this.showGameOverModal();
+    } else {
+      setTimeout(() => {
+        this.quiz$.NEXT();
+        this.speech$.SET_TEXT(this.quiz$.question.question);
+        this.timer$.RESET_TIMER();
+      }, 2000);
+    }
+  }
+
+  private checkGameIsOver(): boolean {
+    switch (this.settings$.gameMode) {
+      case GameModeEnum.MARATHON:
+        return this.quiz$.latestAnswerIsCorrect === false;
+      case GameModeEnum.EXAMINATION:
+        return this.examProgress >= 100;
+      default:
+        return false;
+    }
+  }
+
+  private storeRecord() {
+    switch (this.settings$.gameMode) {
+      case GameModeEnum.MARATHON:
+        this.records$.UPDATE_CHAINED_COUNT({
+          sheetId: this.spreadsheetId,
+          newChainedCount: this.quiz$.correctCount
+        });
+        break;
+      case GameModeEnum.EXAMINATION:
+        this.records$.UPDATE_ACCURACY({
+          sheetId: this.spreadsheetId,
+          newAccuracy: this.quiz$.correctCount / this.quiz$.answeredCount
+        });
+        break;
+      default:
+        break;
+    }
+  }
+
+  private showGameOverModal() {
+    let message = "";
+    switch (this.settings$.gameMode) {
+      case GameModeEnum.MARATHON:
+        message = `Your chained cound is <b>${this.quiz$.correctCount}</b>`;
+        break;
+      case GameModeEnum.EXAMINATION:
+        message = `Your accuracy is <b>${this.quiz$.accuracy}%</b>`;
+        break;
+      default:
+        break;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    this.$buefy.modal.open({
+      parent: this,
+      component: GameOverModal,
+      hasModalCard: true,
+      trapFocus: true,
+      canCancel: false,
+      props: {
+        message: message
+      },
+      events: {
+        retry: () => {
+          this.quiz$.RESTART();
+          this.speech$.SET_TEXT(this.quiz$.question.question);
+          this.timer$.RESET_TIMER();
+        },
+        exit: () => {
+          this.$router.replace({ name: "Top" });
+        }
+      }
+    });
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.voice {
-  text-align: center;
-  margin-bottom: 10rem;
+.question {
+  margin: 4rem 0;
 }
-.panel-label {
-  padding-right: 0.25rem;
-}
-.result {
-  text-align: center;
+.answer {
+  font-size: 120%;
+  padding: 1rem 0;
 }
 </style>

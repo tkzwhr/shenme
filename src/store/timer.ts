@@ -21,19 +21,24 @@ export interface TimerState {
   name: "timer",
   namespaced: true
 })
-class Timer extends VuexModule implements TimerState {
+class TimerModule extends VuexModule implements TimerState {
   duration = 0;
   currentDate: Date | null = null;
   beginDate: Dayjs | null = null;
   timeIntervalId: number | null = null;
 
-  get timeProgress(): number {
+  get elapsedTimeRatio(): number {
     if (!this.currentDate || !this.beginDate) {
       return 0;
     }
 
     const elapsed = this.beginDate.diff(this.currentDate, "ms");
     return Math.min(-elapsed / this.duration, 1.0);
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  get expired(): boolean {
+    return this.elapsedTimeRatio === 1.0;
   }
 
   @Mutation
@@ -99,5 +104,5 @@ class Timer extends VuexModule implements TimerState {
   }
 }
 
-const $timer = getModule(Timer, store);
+const $timer = getModule(TimerModule, store);
 export default $timer;
