@@ -2,6 +2,7 @@
   <div>
     <nav-bar
       :title="title"
+      @statistics="navigateToStatistics"
       @settings="showSettingsModal"
       @back="$router.back()"
     ></nav-bar>
@@ -42,6 +43,10 @@ export default class App extends Vue {
   }
   get settings(): SettingsView {
     return SettingTranslator.modelToView(this.settings$);
+  }
+
+  navigateToStatistics() {
+    this.$router.push({ name: "Statistics" });
   }
 
   showSettingsModal() {

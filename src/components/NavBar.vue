@@ -8,9 +8,22 @@
       </template>
       <template slot="end">
         <b-navbar-item tag="div" class="buttons">
+          <b-button type="is-light" icon-left="chart-bar" @click="statistics"
+            >Statistics</b-button
+          >
           <b-button type="is-light" icon-left="settings" @click="settings"
             >Settings</b-button
           >
+        </b-navbar-item>
+      </template>
+    </template>
+    <template v-else-if="$route.name === 'Statistics'">
+      <template slot="brand">
+        <b-navbar-item @click="back">
+          <b-icon icon="arrow-left"></b-icon>
+        </b-navbar-item>
+        <b-navbar-item tag="div" :active="false">
+          <span class="has-text-weight-bold">Statistics</span>
         </b-navbar-item>
       </template>
     </template>
@@ -34,6 +47,9 @@ import { Component, Prop, Emit, Vue } from "vue-property-decorator";
 export default class NavBar extends Vue {
   @Prop() private readonly title!: string;
 
+  @Emit() statistics() {
+    return;
+  }
   @Emit() settings() {
     return;
   }

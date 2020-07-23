@@ -34,7 +34,7 @@
       <speaker
         :disabled="!canSpeak"
         :is-speaking="speech$.isSpeaking"
-        @speak="speech$.speak(window)"
+        @speak="onSpeak"
       ></speaker>
     </div>
     <answers-panel
@@ -55,7 +55,8 @@ import { Component, Vue, Watch } from "vue-property-decorator";
 import { GameModeEnum } from "@/enums/gameMode";
 import ActionState from "@/enums/actionState";
 import $spreadsheet from "@/store/spreadsheet";
-import $records from "@/store/records";
+import $sheetStatistics from "../store/sheetStatistics";
+import $dailyStatistics from "@/store/dailyStatistics";
 import $settings from "@/store/settings";
 import $quiz from "@/store/quiz";
 import $speech from "@/store/speech";
@@ -64,6 +65,7 @@ import Speaker from "@/components/Speaker.vue";
 import TimeProgress from "@/components/TimeProgress.vue";
 import AnswersPanel from "@/components/AnswersPanel.vue";
 import GameOverModal from "@/components/GameOver.modal.vue";
+import Stopwatch from "@/utils/stopwatch";
 
 @Component({
   components: {
@@ -74,7 +76,8 @@ import GameOverModal from "@/components/GameOver.modal.vue";
 })
 export default class Quiz extends Vue {
   private readonly spreadsheet$ = $spreadsheet;
-  private readonly records$ = $records;
+  private readonly sheetStatistics$ = $sheetStatistics;
+  private readonly dailyStatistics$ = $dailyStatistics;
   private readonly settings$ = $settings;
   private readonly quiz$ = $quiz;
   private readonly speech$ = $speech;
@@ -83,6 +86,7 @@ export default class Quiz extends Vue {
   private readonly ActionState = ActionState;
 
   private window?: Window;
+  private stopwatch = new Stopwatch();
 
   get spreadsheetId(): string {
     return this.$route.params.sheetId as string;
@@ -135,6 +139,11 @@ export default class Quiz extends Vue {
     this.timer$.INITIALIZE(this.settings$.answerTime * 1000);
   }
 
+  onSpeak() {
+    this.speech$.speak(window);
+    this.stopwatch.start();
+  }
+
   @Watch("speech$.spokenCount", { immediate: true })
   onSpoke(value: number) {
     if (value === 1) {
@@ -143,23 +152,42 @@ export default class Quiz extends Vue {
   }
 
   @Watch("timer$.expired", { immediate: true })
-  onExpired(expired: boolean) {
+  async onExpired(expired: boolean) {
     this.timer$.STOP_TIMER();
+    this.stopwatch.stop();
+    await this.sheetStatistics$.answer({
+      sheetId: this.spreadsheetId,
+      time: this.stopwatch.latestTime,
+      isCorrect: false
+    });
+    await this.dailyStatistics$.answer({
+      time: this.stopwatch.latestTime,
+      isCorrect: false
+    });
     if (this.settings$.gameMode !== GameModeEnum.TRAINING && expired) {
       this.quiz$.TIME_IS_UP();
       this.judge();
     }
   }
 
-  answered(answer: string) {
+  async answered(answer: string) {
     this.timer$.STOP_TIMER();
+    this.stopwatch.stop();
     this.quiz$.ANSWER(answer);
+    await this.sheetStatistics$.answer({
+      sheetId: this.spreadsheetId,
+      time: this.stopwatch.latestTime,
+      isCorrect: this.quiz$.latestAnswerIsCorrect ?? false
+    });
+    await this.dailyStatistics$.answer({
+      time: this.stopwatch.latestTime,
+      isCorrect: this.quiz$.latestAnswerIsCorrect ?? false
+    });
     this.judge();
   }
 
   judge() {
     if (this.checkGameIsOver()) {
-      this.storeRecord();
       this.showGameOverModal();
     } else {
       setTimeout(() => {
@@ -178,25 +206,6 @@ export default class Quiz extends Vue {
         return this.examProgress >= 100;
       default:
         return false;
-    }
-  }
-
-  private storeRecord() {
-    switch (this.settings$.gameMode) {
-      case GameModeEnum.MARATHON:
-        this.records$.UPDATE_CHAINED_COUNT({
-          sheetId: this.spreadsheetId,
-          newChainedCount: this.quiz$.correctCount
-        });
-        break;
-      case GameModeEnum.EXAMINATION:
-        this.records$.UPDATE_ACCURACY({
-          sheetId: this.spreadsheetId,
-          newAccuracy: this.quiz$.correctCount / this.quiz$.answeredCount
-        });
-        break;
-      default:
-        break;
     }
   }
 
