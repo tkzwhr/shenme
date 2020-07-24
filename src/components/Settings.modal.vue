@@ -8,21 +8,15 @@
         <b-field>
           <b-radio-button
             v-model="newSettings.gameMode"
-            :native-value="GameModeEnum.TRAINING"
-          >
-            Training
-          </b-radio-button>
-          <b-radio-button
-            v-model="newSettings.gameMode"
-            :native-value="GameModeEnum.MARATHON"
-          >
-            Marathon
-          </b-radio-button>
-          <b-radio-button
-            v-model="newSettings.gameMode"
             :native-value="GameModeEnum.EXAMINATION"
           >
             Examination
+          </b-radio-button>
+          <b-radio-button
+            v-model="newSettings.gameMode"
+            :native-value="GameModeEnum.TRAINING"
+          >
+            Training
           </b-radio-button>
         </b-field>
       </b-field>
@@ -52,7 +46,7 @@
           :min="5"
           :max="100"
           :step="5"
-          :disabled="newSettings.gameMode !== GameModeEnum.EXAMINATION"
+          :disabled="newSettings.gameMode === GameModeEnum.TRAINING"
           :editable="false"
         ></b-numberinput>
       </b-field>

@@ -7,16 +7,13 @@
       @sync="syncWithSpreadsheet"
       @unlink="confirmToUnlinkSpreadsheet"
     ></spreadsheet-panel>
-    <sheet-list
-      v-if="url"
-      :sheets="sheets"
-      @select="navigateToGame"
-    ></sheet-list>
+    <sheet-list v-if="url" :sheets="sheets" @select="navigate"></sheet-list>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
+import $settings from "@/store/settings";
 import $spreadsheet from "@/store/spreadsheet";
 import $sheetStatistics from "@/store/sheetStatistics";
 import $dailyStatistics from "@/store/dailyStatistics";
@@ -33,7 +30,8 @@ import { SheetListRowView } from "@/components/views.type";
     SettingModal
   }
 })
-export default class Top extends Vue {
+export default class TopPage extends Vue {
+  private readonly settings$ = $settings;
   private readonly spreadsheet$ = $spreadsheet;
   private readonly sheetStatistics$ = $sheetStatistics;
   private readonly dailyStatistics$ = $dailyStatistics;
@@ -59,8 +57,15 @@ export default class Top extends Vue {
     }
   }
 
-  navigateToGame(sheetId: string) {
-    this.$router.push({ name: "Quiz", params: { sheetId } });
+  navigate(sheetId: string) {
+    switch (this.settings$.gameMode) {
+      case "EXAMINATION":
+        this.$router.push({ name: "Exam", params: { sheetId } });
+        break;
+      case "TRAINING":
+        this.$router.push({ name: "Training", params: { sheetId } });
+        break;
+    }
   }
 
   async syncWithSpreadsheet(spreadsheetId: string) {

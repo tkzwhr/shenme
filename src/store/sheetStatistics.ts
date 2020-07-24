@@ -1,14 +1,14 @@
 import {
   Mutation,
-  Action,
   VuexModule,
   Module,
   getModule
 } from "vuex-module-decorators";
 import store from "./index";
 import SheetStatistics from "@/models/sheetStatistics";
+import Bitstack from "@/utils/bitstack";
 
-export interface DailyStatisticsState {
+export interface SheetStatisticsState {
   items: Array<SheetStatistics>;
 }
 
@@ -19,48 +19,54 @@ export interface DailyStatisticsState {
   namespaced: true,
   preserveState: localStorage.getItem("vuex") !== null
 })
-class SheetStatisticsModule extends VuexModule implements DailyStatisticsState {
+class SheetStatisticsModule extends VuexModule implements SheetStatisticsState {
   items: Array<SheetStatistics> = [];
 
-  get find(): (sheetId: string) => SheetStatistics | undefined {
-    return (sheetId: string) => {
-      const found = this.items.find(s => s.sheetId === sheetId);
-      if (found) {
-        return Object.assign({}, found);
-      }
-      return undefined;
-    };
+  @Mutation
+  RECORD_TIME(data: { sheetId: string; time: number }) {
+    const item = this.items.find(s => s.sheetId === data.sheetId);
+    if (item) {
+      item.learningTime += data.time;
+    } else {
+      this.items.push({
+        sheetId: data.sheetId,
+        learningTime: data.time,
+        correct: 0,
+        incorrect: 0,
+        answeredHistory: "0",
+        chained: 0,
+        maxChained: 0
+      });
+    }
   }
 
   @Mutation
-  STORE(data: SheetStatistics) {
-    this.items = this.items.filter(s => s.sheetId !== data.sheetId);
-    this.items.push(data);
+  ANSWER(data: { sheetId: string; isCorrect: boolean }) {
+    const item = this.items.find(s => s.sheetId === data.sheetId);
+    if (item) {
+      const bitstack = new Bitstack(BigInt("0x" + item.answeredHistory), 50);
+      bitstack.add(data.isCorrect);
+      item.correct += data.isCorrect ? 1 : 0;
+      item.incorrect += data.isCorrect ? 0 : 1;
+      item.answeredHistory = bitstack.hex;
+      item.chained = data.isCorrect ? item.chained + 1 : 0;
+      item.maxChained = Math.max(item.maxChained, item.chained);
+    } else {
+      this.items.push({
+        sheetId: data.sheetId,
+        learningTime: 0,
+        correct: data.isCorrect ? 1 : 0,
+        incorrect: data.isCorrect ? 0 : 1,
+        answeredHistory: data.isCorrect ? "1" : "0",
+        chained: data.isCorrect ? 1 : 0,
+        maxChained: data.isCorrect ? 1 : 0
+      });
+    }
   }
 
   @Mutation
   DELETE() {
     this.items = [];
-  }
-
-  @Action({ commit: "STORE" })
-  answer(data: { sheetId: string; time: number; isCorrect: boolean }) {
-    const statistics = (this.context.getters as SheetStatisticsModule).find(
-      data.sheetId
-    ) ?? {
-      sheetId: data.sheetId,
-      learningTime: 0,
-      correct: 0,
-      incorrect: 0,
-      answeredHistory: "0",
-      chained: 0
-    };
-    statistics.learningTime += data.time;
-    statistics.correct += data.isCorrect ? 1 : 0;
-    statistics.incorrect += data.isCorrect ? 0 : 1;
-    statistics.answeredHistory = "0"; // TODO
-    statistics.chained = data.isCorrect ? statistics.chained + 1 : 0;
-    return statistics;
   }
 }
 

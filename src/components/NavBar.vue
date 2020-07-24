@@ -27,7 +27,7 @@
         </b-navbar-item>
       </template>
     </template>
-    <template v-else-if="$route.name === 'Quiz'">
+    <template v-else-if="$route.name === 'Exam' || $route.name === 'Training'">
       <template slot="brand">
         <b-navbar-item @click="back">
           <b-icon icon="arrow-left"></b-icon>

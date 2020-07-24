@@ -22,18 +22,19 @@ export default class AnswersPanel extends Vue {
   @Prop() private readonly disabled!: boolean;
   // noinspection JSMismatchedCollectionQueryUpdate
   @Prop() private readonly options!: Array<string>;
-  @Prop() private readonly correct!: string | null;
+  @Prop() private readonly answer!: string;
+  @Prop() private readonly showsAnswer?: boolean;
 
   @Emit() answered(value: string): string {
     return value;
   }
 
-  private selected!: string | null;
+  private selected: string | null = null;
 
   get type(): (index: number) => string | null {
     return (index: number) => {
-      if (this.correct !== null) {
-        if (this.options[index] === this.correct) {
+      if (this.selected !== null || this.showsAnswer === true) {
+        if (this.options[index] === this.answer) {
           return "is-success";
         }
         if (this.options[index] === this.selected) {

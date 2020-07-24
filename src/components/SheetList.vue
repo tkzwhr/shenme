@@ -36,23 +36,37 @@
       </b-table-column>
       <b-table-column field="answeredCount" label="Answered Count" numeric>
         <template v-if="!props.row.loading">
-          {{ props.row.correct + props.row.incorrect }}
+          {{ props.row.answered ? props.row.answered : "-" }}
         </template>
       </b-table-column>
-      <b-table-column field="correctRate" label="Correct Rate" numeric>
+      <b-table-column
+        field="correctRate"
+        label="Correct Rate of Latest 50"
+        numeric
+      >
         <template
-          v-if="!props.row.loading && props.row.correct && props.row.incorrect"
+          v-if="
+            !props.row.loading &&
+              props.row.correctRate &&
+              props.row.answered < 50
+          "
         >
-          {{
-            (props.row.correct / (props.row.correct + props.row.incorrect))
-              | percentage
-          }}
+          <b-tooltip
+            type="is-warning"
+            label="The number of answers less than 50"
+          >
+            <b-icon icon="alert-circle" size="is-small"></b-icon>
+          </b-tooltip>
+          {{ props.row.correctRate | percentage }}
+        </template>
+        <template v-else-if="!props.row.loading && props.row.correctRate">
+          {{ props.row.correctRate | percentage }}
         </template>
         <template v-else-if="!props.row.loading">-</template>
       </b-table-column>
-      <b-table-column field="chained" label="Chained Count" numeric>
+      <b-table-column field="maxChained" label="Max Chained Count" numeric>
         <template v-if="!props.row.loading">
-          {{ props.row.chained ? props.row.chained : "-" }}
+          {{ props.row.maxChained ? props.row.maxChained : "-" }}
         </template>
       </b-table-column>
     </template>

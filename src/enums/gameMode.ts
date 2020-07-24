@@ -1,7 +1,6 @@
-export type GameMode = "TRAINING" | "MARATHON" | "EXAMINATION";
+export type GameMode = "EXAMINATION" | "TRAINING";
 
 export enum GameModeEnum {
-  TRAINING = "TRAINING",
-  MARATHON = "MARATHON",
-  EXAMINATION = "EXAMINATION"
+  EXAMINATION = "EXAMINATION",
+  TRAINING = "TRAINING"
 }
