@@ -11,7 +11,7 @@ export default new Vuex.Store({
   modules: {},
   plugins: [
     createPersistedState({
-      paths: ["spreadsheet", "records", "settings"]
+      paths: ["spreadsheet", "settings", "sheetStatistics", "dailyStatistics"]
     })
   ]
 });

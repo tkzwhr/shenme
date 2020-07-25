@@ -18,9 +18,9 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import $spreadsheet from "@/store/spreadsheet";
-import $records from "@/store/records";
+import $sheetStatistics from "@/store/sheetStatistics";
+import $dailyStatistics from "@/store/dailyStatistics";
 import * as SheetListRowTranslator from "@/view-translator/sheetListRow";
-import NavBar from "@/components/NavBar.vue";
 import SpreadsheetPanel from "@/components/SpreadsheetPanel.vue";
 import SheetList from "@/components/SheetList.vue";
 import SettingModal from "@/components/Settings.modal.vue";
@@ -28,7 +28,6 @@ import { SheetListRowView } from "@/components/views.type";
 
 @Component({
   components: {
-    NavBar,
     SpreadsheetPanel,
     SheetList,
     SettingModal
@@ -36,14 +35,15 @@ import { SheetListRowView } from "@/components/views.type";
 })
 export default class Top extends Vue {
   private readonly spreadsheet$ = $spreadsheet;
-  private readonly records$ = $records;
+  private readonly sheetStatistics$ = $sheetStatistics;
+  private readonly dailyStatistics$ = $dailyStatistics;
 
   get url(): string | null {
     return this.spreadsheet$.url;
   }
   get sheets(): Array<SheetListRowView> {
     return this.spreadsheet$.sheets.map(s =>
-      SheetListRowTranslator.modelToView(s, this.records$.records)
+      SheetListRowTranslator.modelToView(s, this.sheetStatistics$.items)
     );
   }
 
@@ -77,7 +77,8 @@ export default class Top extends Vue {
       hasIcon: true,
       onConfirm: () => {
         this.spreadsheet$.DELETE();
-        this.records$.DELETE();
+        this.sheetStatistics$.DELETE();
+        this.dailyStatistics$.DELETE();
       }
     });
   }

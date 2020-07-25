@@ -29,24 +29,30 @@
           {{ props.row.numOfWords }}
         </template>
       </b-table-column>
-      <b-table-column field="playCount" label="Play Count" numeric>
+      <b-table-column field="learningTime" label="Learning Time" numeric>
         <template v-if="!props.row.loading">
-          {{ props.row.playCount }}
+          {{ props.row.learningTime | time }}
         </template>
       </b-table-column>
-      <b-table-column field="accuracy" label="Accuracy" numeric>
+      <b-table-column field="answeredCount" label="Answered Count" numeric>
         <template v-if="!props.row.loading">
+          {{ props.row.correct + props.row.incorrect }}
+        </template>
+      </b-table-column>
+      <b-table-column field="correctRate" label="Correct Rate" numeric>
+        <template
+          v-if="!props.row.loading && props.row.correct && props.row.incorrect"
+        >
           {{
-            props.row.accuracy
-              ? Math.floor(props.row.accuracy * 1000) / 10
-              : "-"
+            (props.row.correct / (props.row.correct + props.row.incorrect))
+              | percentage
           }}
-          %
         </template>
+        <template v-else-if="!props.row.loading">-</template>
       </b-table-column>
-      <b-table-column field="chainedCount" label="Chained Count" numeric>
+      <b-table-column field="chained" label="Chained Count" numeric>
         <template v-if="!props.row.loading">
-          {{ props.row.chainedCount ? props.row.chainedCount : "-" }}
+          {{ props.row.chained ? props.row.chained : "-" }}
         </template>
       </b-table-column>
     </template>
@@ -56,8 +62,11 @@
 <script lang="ts">
 import { Component, Emit, Prop, Vue } from "vue-property-decorator";
 import { SheetListRowView } from "@/components/views.type";
+import { percentage, time } from "@/filters";
 
-@Component
+@Component({
+  filters: { time, percentage }
+})
 export default class SheetList extends Vue {
   @Prop() private readonly sheets!: Array<SheetListRowView>;
 

@@ -1,19 +1,20 @@
 import { SheetListRowView } from "@/components/views.type";
 import { SpreadsheetSheetState } from "@/store/spreadsheet";
-import Record from "@/models/record";
+import SheetStatistics from "@/models/sheetStatistics";
 
 export function modelToView(
   sheet: SpreadsheetSheetState,
-  records: Array<Record>
+  sheetStatistics: Array<SheetStatistics>
 ): SheetListRowView {
-  const record = records.find(r => r.sheetId === sheet.sheetId);
+  const s = sheetStatistics.find(s => s.sheetId === sheet.sheetId);
   return {
     sheetId: sheet.sheetId,
     sheetName: sheet.sheetName,
     numOfWords: sheet.words.length,
-    playCount: record?.playedCount ?? 0,
-    accuracy: record?.accuracy ?? null,
-    chainedCount: record?.chainedCount ?? null,
+    learningTime: s?.learningTime ?? 0,
+    correct: s?.correct ?? null,
+    incorrect: s?.incorrect ?? null,
+    chained: s?.chained ?? null,
     loading: sheet.fetching,
     error: sheet.fetchingErrors.join("\n")
   };

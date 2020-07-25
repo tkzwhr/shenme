@@ -1,6 +1,7 @@
 import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
 import Top from "@/views/Top.vue";
+import Statistics from "@/views/Statistics.vue";
 import Quiz from "@/views/Quiz.vue";
 
 Vue.use(VueRouter);
@@ -10,6 +11,11 @@ const routes: Array<RouteConfig> = [
     path: "/",
     name: "Top",
     component: Top
+  },
+  {
+    path: "/statistics",
+    name: "Statistics",
+    component: Statistics
   },
   {
     path: "/quiz/:sheetId",
