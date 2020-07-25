@@ -18,7 +18,7 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import $spreadsheet from "@/store/spreadsheet";
-import $sheetStatistics from "../store/sheetStatistics";
+import $sheetStatistics from "@/store/sheetStatistics";
 import $dailyStatistics from "@/store/dailyStatistics";
 import * as SheetListRowTranslator from "@/view-translator/sheetListRow";
 import SpreadsheetPanel from "@/components/SpreadsheetPanel.vue";

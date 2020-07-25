@@ -62,7 +62,7 @@
 <script lang="ts">
 import { Component, Emit, Prop, Vue } from "vue-property-decorator";
 import { SheetListRowView } from "@/components/views.type";
-import { date, percentage, time } from "@/filters";
+import { percentage, time } from "@/filters";
 
 @Component({
   filters: { time, percentage }

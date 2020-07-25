@@ -55,7 +55,7 @@ import { Component, Vue, Watch } from "vue-property-decorator";
 import { GameModeEnum } from "@/enums/gameMode";
 import ActionState from "@/enums/actionState";
 import $spreadsheet from "@/store/spreadsheet";
-import $sheetStatistics from "../store/sheetStatistics";
+import $sheetStatistics from "@/store/sheetStatistics";
 import $dailyStatistics from "@/store/dailyStatistics";
 import $settings from "@/store/settings";
 import $quiz from "@/store/quiz";

@@ -15,5 +15,3 @@ export default class Top extends Vue {
   private readonly dailyStatistics$ = $dailyStatistics;
 }
 </script>
-
-<style lang="scss" scoped></style>

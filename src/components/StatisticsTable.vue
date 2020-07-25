@@ -1,6 +1,6 @@
 <template>
   <b-table
-    :data="groupedItem"
+    :data="groupedData"
     detailed
     hoverable
     striped
@@ -102,7 +102,7 @@ export default class StatisticsTable extends Vue {
     return sortedData;
   }
 
-  get groupedItem(): Array<GroupedDailyStatisticsView> {
+  get groupedData(): Array<GroupedDailyStatisticsView> {
     return this.normalizedData.reduce(
       (acc: Array<GroupedDailyStatisticsView>, v: DailyStatisticsView) => {
         const yearMonth = dayjs(v.date).format("YYYY-MM");
