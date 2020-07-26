@@ -41,19 +41,21 @@
       </b-table-column>
       <b-table-column
         field="correctRate"
-        label="Correct Rate of Latest 50"
+        :label="`Correct Rate of Latest ${LATEST_ANSWER_HISTORY_COUNT}`"
         numeric
       >
         <template
           v-if="
             !props.row.loading &&
               props.row.correctRate &&
-              props.row.answered < 50
+              props.row.answered < LATEST_ANSWER_HISTORY_COUNT
           "
         >
           <b-tooltip
             type="is-warning"
-            label="The number of answers less than 50"
+            :label="
+              `The number of answers less than ${LATEST_ANSWER_HISTORY_COUNT}`
+            "
           >
             <b-icon icon="alert-circle" size="is-small"></b-icon>
           </b-tooltip>
@@ -77,11 +79,14 @@
 import { Component, Emit, Prop, Vue } from "vue-property-decorator";
 import { SheetListRowView } from "@/components/views.type";
 import { percentage, time } from "@/filters";
+import { LATEST_ANSWER_HISTORY_COUNT } from "@/const";
 
 @Component({
   filters: { time, percentage }
 })
 export default class SheetList extends Vue {
+  readonly LATEST_ANSWER_HISTORY_COUNT = LATEST_ANSWER_HISTORY_COUNT;
+
   @Prop() private readonly sheets!: Array<SheetListRowView>;
 
   @Emit() select(sheetId: string): string {

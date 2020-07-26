@@ -3,16 +3,16 @@
     <div class="has-text-centered question">
       <speaker
         :disabled="false"
-        :inactive="isSpeaking"
-        @speak="speech.speak()"
+        :inactive="game.isListening"
+        @click="game.listen()"
       ></speaker>
     </div>
     <answers-panel
-      v-if="question"
-      :disabled="!canAnswer"
-      :options="question.options"
-      :answer="question.answer"
-      @answered="answered"
+      v-if="game.currentQuestion"
+      :disabled="!game.canAnswer"
+      :options="game.currentOptions"
+      :answer="game.currentAnswer"
+      @select="game.answer($event)"
     ></answers-panel>
   </div>
 </template>
@@ -20,16 +20,14 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import $spreadsheet from "@/store/spreadsheet";
-import $sheetStatistics from "../store/sheetStatistics";
+import $sheetStatistics from "@/store/sheetStatistics";
 import $dailyStatistics from "@/store/dailyStatistics";
 import Speaker from "@/components/Speaker.vue";
 import TimeProgress from "@/components/TimeProgress.vue";
 import ExamProgress from "@/components/ExamProgress.vue";
 import AnswersPanel from "@/components/AnswersPanel.vue";
+import GameStatus, { GameStatusEvent } from "@/utils/gameStatus";
 import Stopwatch, { StopwatchEvent } from "@/utils/stopwatch";
-import Speech, { SpeechEvent } from "@/utils/speech";
-import QuestionGenerator from "@/utils/questionGenerator";
-import Question from "@/models/question";
 
 @Component({
   components: {
@@ -44,13 +42,8 @@ export default class TrainingPage extends Vue {
   private readonly sheetStatistics$ = $sheetStatistics;
   private readonly dailyStatistics$ = $dailyStatistics;
 
-  private readonly speech = new Speech(window, "zh-CN");
+  private readonly game = new GameStatus(window, { lang: "zh-CN" });
   private readonly stopwatch = new Stopwatch();
-  private readonly questionGenerator = new QuestionGenerator();
-
-  private isSpeaking = false;
-  private canAnswer = false;
-  private question: Question | null = null;
 
   get spreadsheetId(): string {
     return this.$route.params.sheetId as string;
@@ -71,28 +64,36 @@ export default class TrainingPage extends Vue {
 
   // noinspection JSUnusedGlobalSymbols
   mounted() {
-    this.speech.event.subscribe(this.handleSpeech);
-    this.stopwatch.event.subscribe(this.handleStopwatch);
-
     const { words } = this.spreadsheet$.sheets.find(
       t => t.sheetId === this.spreadsheetId
     ) ?? { words: [] };
-    this.questionGenerator.setWords(words);
-    this.question = this.questionGenerator.generate();
-    this.speech.setText(this.question.question);
+    this.game.setWords(words);
+
+    this.game.event.subscribe(this.handleGameStatus);
+    this.stopwatch.event.subscribe(this.handleStopwatch);
   }
 
-  handleSpeech(value: SpeechEvent) {
-    switch (value.type) {
-      case "SPEAK":
-        this.isSpeaking = true;
+  handleGameStatus(event: GameStatusEvent) {
+    switch (event) {
+      case "READY":
+        this.game.provideQuestion();
+        break;
+      case "PROVIDE_QUESTION":
+        break;
+      case "LISTEN_FIRST":
         this.stopwatch.start();
         break;
-      case "SPOKE":
-        this.isSpeaking = false;
-        this.canAnswer = value.count > 0;
+      case "ACCEPTING_ANSWER":
         break;
-      case "RESET":
+      case "ANSWERING_CLOSED":
+        break;
+      case "ANSWERED_CORRECTLY":
+        this.stopwatch.stop();
+        break;
+      case "ANSWERED_INCORRECTLY":
+        this.stopwatch.stop();
+        break;
+      case "GAME_IS_OVER":
         break;
     }
   }
@@ -109,15 +110,6 @@ export default class TrainingPage extends Vue {
       case "RUNNING":
         break;
     }
-  }
-
-  answered() {
-    this.stopwatch.stop();
-    setTimeout(() => {
-      this.question = this.questionGenerator.generate();
-      this.speech.setText(this.question.question);
-      this.canAnswer = false;
-    }, 2000);
   }
 }
 </script>

@@ -25,7 +25,7 @@ export default class AnswersPanel extends Vue {
   @Prop() private readonly answer!: string;
   @Prop() private readonly showsAnswer?: boolean;
 
-  @Emit() answered(value: string): string {
+  @Emit() select(value: string): string {
     return value;
   }
 
@@ -52,7 +52,7 @@ export default class AnswersPanel extends Vue {
 
   checkAnswer(answer: string) {
     this.selected = answer;
-    this.answered(answer);
+    this.select(answer);
   }
 }
 </script>

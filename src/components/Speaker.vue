@@ -6,7 +6,7 @@
     rounded
     size="is-large"
     icon-right="headphones"
-    @click="speak"
+    @click="click"
   ></b-button>
 </template>
 
@@ -18,7 +18,7 @@ export default class Speaker extends Vue {
   @Prop() private readonly disabled!: boolean;
   @Prop() private readonly inactive!: boolean;
 
-  @Emit() speak() {
+  @Emit() click() {
     return;
   }
 }

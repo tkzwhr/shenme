@@ -1,9 +1,9 @@
 <template>
   <div class="a-container">
-    <div class="level has-text-weight-bold">
+    <div class="level">
       <div class="level-left is-vcentered">
         <exam-progress
-          :progress="this.correct + this.incorrect"
+          :progress="game.correct + game.incorrect"
           :max="settings$.numOfQuestions"
         ></exam-progress>
       </div>
@@ -13,18 +13,18 @@
     </div>
     <div class="has-text-centered question">
       <speaker
-        :disabled="!canSpeak"
-        :inactive="isSpeaking"
-        @speak="speech.speak()"
+        :disabled="!game.canListen"
+        :inactive="game.isListening"
+        @click="game.listen()"
       ></speaker>
     </div>
     <answers-panel
-      v-if="question"
-      :disabled="!canAnswer"
-      :options="question.options"
-      :answer="question.answer"
-      :shows-answer="showsAnswer"
-      @answered="answered"
+      v-if="game.currentQuestion"
+      :disabled="!game.canAnswer"
+      :options="game.currentOptions"
+      :answer="game.currentAnswer"
+      :shows-answer="game.timeIsUp"
+      @select="game.answer($event)"
     ></answers-panel>
   </div>
 </template>
@@ -32,7 +32,7 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import $spreadsheet from "@/store/spreadsheet";
-import $sheetStatistics from "../store/sheetStatistics";
+import $sheetStatistics from "@/store/sheetStatistics";
 import $dailyStatistics from "@/store/dailyStatistics";
 import $settings from "@/store/settings";
 import Speaker from "@/components/Speaker.vue";
@@ -40,11 +40,8 @@ import TimeProgress from "@/components/TimeProgress.vue";
 import ExamProgress from "@/components/ExamProgress.vue";
 import AnswersPanel from "@/components/AnswersPanel.vue";
 import GameOverModal from "@/components/GameOver.modal.vue";
+import GameStatus, { GameStatusEvent } from "@/utils/gameStatus";
 import Stopwatch, { StopwatchEvent } from "@/utils/stopwatch";
-import Timer, { TimerEvent } from "@/utils/timer";
-import Speech, { SpeechEvent } from "@/utils/speech";
-import QuestionGenerator from "@/utils/questionGenerator";
-import Question from "@/models/question";
 
 @Component({
   components: {
@@ -54,28 +51,28 @@ import Question from "@/models/question";
     AnswersPanel
   }
 })
-export default class TrainingPage extends Vue {
+export default class ExamPage extends Vue {
   private readonly spreadsheet$ = $spreadsheet;
   private readonly sheetStatistics$ = $sheetStatistics;
   private readonly dailyStatistics$ = $dailyStatistics;
   private readonly settings$ = $settings;
 
-  private readonly speech = new Speech(window, "zh-CN");
+  private readonly game = new GameStatus(window, {
+    lang: "zh-CN",
+    answerTime: this.settings$.answerTime,
+    limitToListen: this.settings$.limitToListen,
+    numOfQuestions: this.settings$.numOfQuestions
+  });
   private readonly stopwatch = new Stopwatch();
-  private readonly timer = new Timer();
-  private readonly questionGenerator = new QuestionGenerator();
-
-  private timeProgress = 100;
-  private isSpeaking = false;
-  private canSpeak = true;
-  private canAnswer = false;
-  private question: Question | null = null;
-  private correct = 0;
-  private incorrect = 0;
-  private showsAnswer = false;
 
   get spreadsheetId(): string {
     return this.$route.params.sheetId as string;
+  }
+
+  get timeProgress(): number {
+    return Math.ceil(
+      (this.game.remainTime / (this.settings$.answerTime * 1000)) * 100
+    );
   }
 
   beforeRouteEnter(to: any, from: any, next: (vm?: any) => void) {
@@ -92,119 +89,78 @@ export default class TrainingPage extends Vue {
   }
 
   beforeRouteLeave(to: any, from: any, next: (vm?: any) => void) {
-    this.timer.stop();
+    this.stopwatch.stop();
+    this.game.finalize();
     next();
   }
 
   // noinspection JSUnusedGlobalSymbols
   mounted() {
-    this.speech.event.subscribe(this.handleSpeech);
-    this.stopwatch.event.subscribe(this.handleStopwatch);
-    this.timer.event.subscribe(this.handleTimer);
-
     const { words } = this.spreadsheet$.sheets.find(
       t => t.sheetId === this.spreadsheetId
     ) ?? { words: [] };
-    this.questionGenerator.setWords(words);
-    this.question = this.questionGenerator.generate();
-    this.timer.setInterval(this.settings$.answerTime * 1000);
+    this.game.setWords(words);
 
-    this.restart();
+    this.game.event.subscribe(this.handleGameStatus);
+    this.stopwatch.event.subscribe(this.handleStopwatch);
   }
 
-  handleSpeech(value: SpeechEvent) {
-    switch (value.type) {
-      case "SPEAK":
-        this.isSpeaking = true;
+  handleGameStatus(event: GameStatusEvent) {
+    switch (event) {
+      case "READY":
+        this.game.provideQuestion();
+        break;
+      case "PROVIDE_QUESTION":
+        break;
+      case "LISTEN_FIRST":
         this.stopwatch.start();
         break;
-      case "SPOKE":
-        if (value.count === 1) {
-          this.timer.start();
-        }
-        this.isSpeaking = false;
-        this.canSpeak = value.count < this.settings$.limitToListen;
-        this.canAnswer = value.count > 0;
+      case "ACCEPTING_ANSWER":
         break;
-      case "RESET":
+      case "ANSWERING_CLOSED":
+        this.answered(false);
+        break;
+      case "ANSWERED_CORRECTLY":
+        this.answered(true);
+        this.checkCombo();
+        break;
+      case "ANSWERED_INCORRECTLY":
+        this.answered(false);
+        break;
+      case "GAME_IS_OVER":
+        this.showGameOverModal();
         break;
     }
   }
 
-  handleStopwatch(value: StopwatchEvent) {
-    switch (value.type) {
+  handleStopwatch(event: StopwatchEvent) {
+    switch (event.type) {
       case "STOPPED":
         this.sheetStatistics$.RECORD_TIME({
           sheetId: this.spreadsheetId,
-          time: value.elapsed
+          time: event.elapsed
         });
-        this.dailyStatistics$.RECORD_TIME(value.elapsed);
+        this.dailyStatistics$.RECORD_TIME(event.elapsed);
         break;
       case "RUNNING":
         break;
     }
   }
 
-  handleTimer(value: TimerEvent) {
-    switch (value.type) {
-      case "STOPPED":
-        break;
-      case "RUNNING":
-        this.timeProgress = Math.ceil(
-          (value.remain / (this.settings$.answerTime * 1000)) * 100
-        );
-        break;
-      case "TIME_IS_UP":
-        this.showsAnswer = true;
-        this.stopwatch.stop();
-        this.sheetStatistics$.ANSWER({
-          sheetId: this.spreadsheetId,
-          isCorrect: false
-        });
-        this.dailyStatistics$.ANSWER(false);
-        this.incorrect += 1;
-        this.judgeAndNext();
-        break;
-    }
-  }
-
-  answered(answer: string) {
-    const isCorrect = this.question?.answer === answer;
-    this.timer.stop();
+  answered(isCorrect: boolean) {
     this.stopwatch.stop();
     this.sheetStatistics$.ANSWER({
       sheetId: this.spreadsheetId,
-      isCorrect
+      isCorrect: isCorrect
     });
     this.dailyStatistics$.ANSWER(isCorrect);
-    this.correct += isCorrect ? 1 : 0;
-    this.incorrect += isCorrect ? 0 : 1;
-    this.combo();
-    this.judgeAndNext();
   }
 
-  private restart() {
-    this.showsAnswer = false;
-    this.question = this.questionGenerator.generate();
-    this.speech.setText(this.question.question);
-    this.canSpeak = true;
-    this.canAnswer = false;
-    this.timeProgress = 100;
-  }
-
-  private judgeAndNext() {
-    if (this.correct + this.incorrect === this.settings$.numOfQuestions) {
-      this.showGameOverModal();
-    } else {
-      setTimeout(this.restart, 2000);
-    }
-  }
-
-  private combo() {
+  private checkCombo() {
     const item = this.sheetStatistics$.items.find(
       s => s.sheetId === this.spreadsheetId
     );
-    if (item && item.chained >= 5) {
+    if (item && item.chained > item.maxChained) {
       this.$buefy.toast.open({
         duration: 2000,
         message: `${item.chained} COMBO!`,
@@ -225,15 +181,11 @@ export default class TrainingPage extends Vue {
       props: {
         message: `Your accuracy is`,
         score: `${Math.round(
-          (this.correct / (this.correct + this.incorrect)) * 1000
+          (this.game.correct / (this.game.correct + this.game.incorrect)) * 1000
         ) / 10}%`
       },
       events: {
-        retry: () => {
-          this.correct = 0;
-          this.incorrect = 0;
-          this.restart();
-        },
+        retry: this.game.reset,
         exit: () => {
           this.$router.replace({ name: "Top" });
         }

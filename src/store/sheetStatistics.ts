@@ -7,6 +7,7 @@ import {
 import store from "./index";
 import SheetStatistics from "@/models/sheetStatistics";
 import Bitstack from "@/utils/bitstack";
+import { LATEST_ANSWER_HISTORY_COUNT } from "@/const";
 
 export interface SheetStatisticsState {
   items: Array<SheetStatistics>;
@@ -44,7 +45,10 @@ class SheetStatisticsModule extends VuexModule implements SheetStatisticsState {
   ANSWER(data: { sheetId: string; isCorrect: boolean }) {
     const item = this.items.find(s => s.sheetId === data.sheetId);
     if (item) {
-      const bitstack = new Bitstack(BigInt("0x" + item.answeredHistory), 50);
+      const bitstack = new Bitstack(
+        BigInt("0x" + item.answeredHistory),
+        LATEST_ANSWER_HISTORY_COUNT
+      );
       bitstack.add(data.isCorrect);
       item.correct += data.isCorrect ? 1 : 0;
       item.incorrect += data.isCorrect ? 0 : 1;

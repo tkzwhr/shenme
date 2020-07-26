@@ -1,0 +1,1 @@
+export const LATEST_ANSWER_HISTORY_COUNT = 50;
