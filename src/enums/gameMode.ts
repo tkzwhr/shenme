@@ -1,6 +1,6 @@
 export type GameMode = "EXAMINATION" | "TRAINING";
 
-export enum GameModeEnum {
-  EXAMINATION = "EXAMINATION",
-  TRAINING = "TRAINING"
-}
+export const GameModeEnum: { [key in GameMode]: key } = {
+  EXAMINATION: "EXAMINATION",
+  TRAINING: "TRAINING"
+};

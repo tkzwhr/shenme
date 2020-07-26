@@ -2,6 +2,7 @@ import { BehaviorSubject, Observable } from "rxjs";
 import Timer from "@/utils/timer";
 import Speech from "@/utils/speech";
 import Word from "@/models/word";
+import { QuestionMode } from "@/enums/questionMode";
 
 export type GameStatusEvent =
   | "READY"
@@ -14,7 +15,8 @@ export type GameStatusEvent =
   | "GAME_IS_OVER";
 
 export interface GameStatusConfiguration {
-  lang: string;
+  voiceName: string;
+  questionMode: QuestionMode;
   answerTime?: number;
   limitToListen?: number;
   numOfQuestions?: number;
@@ -22,7 +24,10 @@ export interface GameStatusConfiguration {
 
 export default class GameStatus {
   private readonly _timer = new Timer();
-  private readonly _speech = new Speech(this._window, this._configuration.lang);
+  private readonly _speech = new Speech(
+    this._window,
+    this._configuration.voiceName
+  );
   private readonly _event$ = new BehaviorSubject<GameStatusEvent>("READY");
   private readonly _words: Array<Word> = [];
 
@@ -117,9 +122,26 @@ export default class GameStatus {
       }
     }
 
+    let isBack = true;
+    switch (this._configuration.questionMode) {
+      case "NORMAL":
+        isBack = true;
+        break;
+      case "ONLY_FRONT":
+        isBack = false;
+        break;
+      case "AT_RANDOM":
+        isBack = Math.floor(Math.random() * 2) === 0;
+        break;
+    }
+
     this._question = this._words[correct].front;
-    this._answer = this._words[correct].back;
-    this._options = this._words.slice(0, 4).map(t => t.back);
+    this._answer = isBack
+      ? this._words[correct].back
+      : this._words[correct].front;
+    this._options = this._words
+      .slice(0, 4)
+      .map(t => (isBack ? t.back : t.front));
 
     this._speech.setText(this._question);
 

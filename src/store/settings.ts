@@ -7,6 +7,7 @@ import {
 import store from "./index";
 import Settings from "@/models/settings";
 import { GameMode, GameModeEnum } from "@/enums/gameMode";
+import { QuestionMode, QuestionModeEnum } from "@/enums/questionMode";
 
 @Module({
   dynamic: true,
@@ -16,14 +17,18 @@ import { GameMode, GameModeEnum } from "@/enums/gameMode";
   preserveState: localStorage.getItem("vuex") !== null
 })
 class SettingsModule extends VuexModule implements Settings {
-  gameMode: GameMode = GameModeEnum.TRAINING;
+  learningLanguage = "";
+  gameMode: GameMode = GameModeEnum.EXAMINATION;
+  questionMode: QuestionMode = QuestionModeEnum.NORMAL;
   answerTime = 5;
   limitToListen = 2;
   numOfQuestions = 10;
 
   @Mutation
   UPDATE(payload: Settings) {
+    this.learningLanguage = payload.learningLanguage;
     this.gameMode = payload.gameMode;
+    this.questionMode = payload.questionMode;
     this.answerTime = payload.answerTime;
     this.limitToListen = payload.limitToListen;
     this.numOfQuestions = payload.numOfQuestions;

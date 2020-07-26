@@ -7,8 +7,15 @@ export default class Speech {
   private _isSpeaking = false;
   private _spokenCount = 0;
 
-  constructor(private _window: Window, lang: string) {
-    this._speech.lang = lang;
+  constructor(private _window: Window, voiceName: string) {
+    this._speech.voice =
+      _window.speechSynthesis.getVoices().find(v => v.name === voiceName) ??
+      null;
+    _window.speechSynthesis.onvoiceschanged = () => {
+      this._speech.voice =
+        _window.speechSynthesis.getVoices().find(v => v.name === voiceName) ??
+        null;
+    };
     this._speech.onstart = () => {
       this._isSpeaking = true;
     };

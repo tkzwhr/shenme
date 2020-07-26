@@ -4,6 +4,19 @@
       <p class="modal-card-title">Settings</p>
     </header>
     <section class="modal-card-body">
+      <b-field label="Learning Language">
+        <b-field>
+          <b-select
+            v-model="newSettings.learningLanguage"
+            placeholder="Select a learning language"
+          >
+            <option v-for="lang in languages" :key="lang" :value="lang">{{
+              lang
+            }}</option>
+          </b-select>
+        </b-field>
+      </b-field>
+
       <b-field label="Game Mode">
         <b-field>
           <b-radio-button
@@ -17,6 +30,29 @@
             :native-value="GameModeEnum.TRAINING"
           >
             Training
+          </b-radio-button>
+        </b-field>
+      </b-field>
+
+      <b-field label="Question Mode" :message="questionModeDescription">
+        <b-field>
+          <b-radio-button
+            v-model="newSettings.questionMode"
+            :native-value="QuestionModeEnum.NORMAL"
+          >
+            Normal
+          </b-radio-button>
+          <b-radio-button
+            v-model="newSettings.questionMode"
+            :native-value="QuestionModeEnum.ONLY_FRONT"
+          >
+            Only front
+          </b-radio-button>
+          <b-radio-button
+            v-model="newSettings.questionMode"
+            :native-value="QuestionModeEnum.AT_RANDOM"
+          >
+            At random
           </b-radio-button>
         </b-field>
       </b-field>
@@ -72,12 +108,27 @@
 import { Component, Prop, Emit, Vue } from "vue-property-decorator";
 import { SettingsView } from "@/components/views.type";
 import { GameModeEnum } from "@/enums/gameMode";
+import { QuestionMode, QuestionModeEnum } from "@/enums/questionMode";
 
 @Component
 export default class SettingsModal extends Vue {
   private readonly GameModeEnum = GameModeEnum;
+  private readonly QuestionModeEnum = QuestionModeEnum;
+
+  get questionModeDescription(): string | undefined {
+    switch (this.newSettings.questionMode as QuestionMode) {
+      case "NORMAL":
+        break;
+      case "ONLY_FRONT":
+        return "Options also are from 'Front'.";
+      case "AT_RANDOM":
+        return "At each question it is decided that options are from 'Front' or 'Back'.";
+    }
+    return undefined;
+  }
 
   @Prop() private readonly settings!: SettingsView;
+  @Prop() private readonly languages!: Array<string>;
 
   @Emit() apply(): SettingsView {
     return this.newSettings;

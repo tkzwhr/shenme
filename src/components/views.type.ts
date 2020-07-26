@@ -11,7 +11,9 @@ export interface SheetListRowView {
 }
 
 export interface SettingsView {
+  learningLanguage: string;
   gameMode: string;
+  questionMode: string;
   answerTime: number;
   limitToListen: number;
   numOfQuestions: number;
