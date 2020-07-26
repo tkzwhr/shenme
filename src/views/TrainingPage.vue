@@ -22,6 +22,7 @@ import { Component, Vue } from "vue-property-decorator";
 import $spreadsheet from "@/store/spreadsheet";
 import $sheetStatistics from "@/store/sheetStatistics";
 import $dailyStatistics from "@/store/dailyStatistics";
+import $settings from "@/store/settings";
 import Speaker from "@/components/Speaker.vue";
 import TimeProgress from "@/components/TimeProgress.vue";
 import ExamProgress from "@/components/ExamProgress.vue";
@@ -41,8 +42,12 @@ export default class TrainingPage extends Vue {
   private readonly spreadsheet$ = $spreadsheet;
   private readonly sheetStatistics$ = $sheetStatistics;
   private readonly dailyStatistics$ = $dailyStatistics;
+  private readonly settings$ = $settings;
 
-  private readonly game = new GameStatus(window, { lang: "zh-CN" });
+  private readonly game = new GameStatus(window, {
+    voiceName: this.settings$.learningLanguage,
+    questionMode: this.settings$.questionMode
+  });
   private readonly stopwatch = new Stopwatch();
 
   get spreadsheetId(): string {

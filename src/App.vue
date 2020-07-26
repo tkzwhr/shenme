@@ -34,6 +34,8 @@ export default class App extends Vue {
   private readonly settings$ = $settings;
   private readonly spreadsheet$ = $spreadsheet;
 
+  private languages: Array<string> = [];
+
   get title(): string {
     const sheetId = this.$route.params.sheetId as string | undefined;
     const spreadsheet = this.spreadsheet$.sheets.find(
@@ -43,6 +45,11 @@ export default class App extends Vue {
   }
   get settings(): SettingsView {
     return SettingTranslator.modelToView(this.settings$);
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  mounted() {
+    this.loadVoices();
   }
 
   navigateToStatistics() {
@@ -57,7 +64,8 @@ export default class App extends Vue {
       hasModalCard: true,
       trapFocus: true,
       props: {
-        settings: this.settings
+        settings: this.settings,
+        languages: this.languages
       },
       events: {
         apply: (newSetting: SettingsView) => {
@@ -68,6 +76,17 @@ export default class App extends Vue {
         }
       }
     });
+  }
+
+  private loadVoices() {
+    this.languages.push(...window.speechSynthesis.getVoices().map(v => v.name));
+    // For chrome
+    window.speechSynthesis.onvoiceschanged = () => {
+      this.languages.length = 0;
+      this.languages.push(
+        ...window.speechSynthesis.getVoices().map(v => v.name)
+      );
+    };
   }
 }
 </script>

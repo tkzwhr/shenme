@@ -58,7 +58,8 @@ export default class ExamPage extends Vue {
   private readonly settings$ = $settings;
 
   private readonly game = new GameStatus(window, {
-    lang: "zh-CN",
+    voiceName: this.settings$.learningLanguage,
+    questionMode: this.settings$.questionMode,
     answerTime: this.settings$.answerTime,
     limitToListen: this.settings$.limitToListen,
     numOfQuestions: this.settings$.numOfQuestions
