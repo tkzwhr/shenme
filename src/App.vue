@@ -50,6 +50,7 @@ export default class App extends Vue {
   }
 
   showSettingsModal() {
+    // noinspection JSUnusedGlobalSymbols
     this.$buefy.modal.open({
       parent: this,
       component: SettingModal,

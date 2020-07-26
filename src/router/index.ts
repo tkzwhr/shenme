@@ -1,8 +1,9 @@
 import Vue from "vue";
 import VueRouter, { RouteConfig } from "vue-router";
-import Top from "@/views/Top.vue";
-import Statistics from "@/views/Statistics.vue";
-import Quiz from "@/views/Quiz.vue";
+import TopPage from "@/views/TopPage.vue";
+import ExamPage from "@/views/ExamPage.vue";
+import TrainingPage from "@/views/TrainingPage.vue";
+import StatisticsPage from "@/views/StatisticsPage.vue";
 
 Vue.use(VueRouter);
 
@@ -10,17 +11,22 @@ const routes: Array<RouteConfig> = [
   {
     path: "/",
     name: "Top",
-    component: Top
+    component: TopPage
   },
   {
     path: "/statistics",
     name: "Statistics",
-    component: Statistics
+    component: StatisticsPage
   },
   {
-    path: "/quiz/:sheetId",
-    name: "Quiz",
-    component: Quiz
+    path: "/training/:sheetId",
+    name: "Training",
+    component: TrainingPage
+  },
+  {
+    path: "/exam/:sheetId",
+    name: "Exam",
+    component: ExamPage
   }
 ];
 

@@ -11,7 +11,7 @@ import $dailyStatistics from "@/store/dailyStatistics";
 @Component({
   components: { StatisticsTable }
 })
-export default class Top extends Vue {
+export default class StatisticsPage extends Vue {
   private readonly dailyStatistics$ = $dailyStatistics;
 }
 </script>

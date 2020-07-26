@@ -5,4 +5,5 @@ export default interface SheetStatistics {
   incorrect: number;
   answeredHistory: string;
   chained: number;
+  maxChained: number;
 }

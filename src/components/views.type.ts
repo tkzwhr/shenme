@@ -3,9 +3,9 @@ export interface SheetListRowView {
   sheetName: string;
   numOfWords: number;
   learningTime: number;
-  correct: number | null;
-  incorrect: number | null;
-  chained: number | null;
+  answered: number | null;
+  correctRate: number | null;
+  maxChained: number | null;
   loading: boolean;
   error: string;
 }

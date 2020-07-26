@@ -1,14 +1,12 @@
 <template>
   <div class="level is-mobile">
     <div class="level-left is-vcentered progress-label">
-      Time :
+      Progress :
     </div>
     <div class="level-right is-vcentered">
-      <b-progress
-        class="progress-bar"
-        :type="type"
-        :value="progress"
-      ></b-progress>
+      <b-progress class="progress-bar" :max="max" :value="progress" show-value
+        >{{ progress }} / {{ max }}</b-progress
+      >
     </div>
   </div>
 </template>
@@ -18,17 +16,8 @@ import { Component, Prop, Vue } from "vue-property-decorator";
 
 @Component
 export default class TimeProgress extends Vue {
+  @Prop() private readonly max!: number;
   @Prop() private readonly progress!: number;
-
-  get type() {
-    if (this.progress <= 25) {
-      return "is-danger";
-    }
-    if (this.progress <= 50) {
-      return "is-warning";
-    }
-    return "is-success";
-  }
 }
 </script>
 
