@@ -17,7 +17,7 @@ import $spreadsheet from "@/store/spreadsheet";
 import * as SettingTranslator from "@/view-translator/settings";
 import NavBar from "@/components/NavBar.vue";
 import SettingModal from "@/components/Settings.modal.vue";
-import { SettingsView } from "@/components/views.type";
+import { Language, SettingsView } from "@/components/views.type";
 
 Component.registerHooks([
   "beforeRouteEnter",
@@ -34,7 +34,7 @@ export default class App extends Vue {
   private readonly settings$ = $settings;
   private readonly spreadsheet$ = $spreadsheet;
 
-  private languages: Array<string> = [];
+  private languages: Array<Language> = [];
 
   get title(): string {
     const sheetId = this.$route.params.sheetId as string | undefined;
@@ -79,12 +79,18 @@ export default class App extends Vue {
   }
 
   private loadVoices() {
-    this.languages.push(...window.speechSynthesis.getVoices().map(v => v.name));
+    this.languages.push(
+      ...window.speechSynthesis
+        .getVoices()
+        .map(v => ({ name: v.name, lang: v.lang }))
+    );
     // For chrome
     window.speechSynthesis.onvoiceschanged = () => {
       this.languages.length = 0;
       this.languages.push(
-        ...window.speechSynthesis.getVoices().map(v => v.name)
+        ...window.speechSynthesis
+          .getVoices()
+          .map(v => ({ name: v.name, lang: v.lang }))
       );
     };
   }

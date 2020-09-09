@@ -10,9 +10,12 @@
             v-model="newSettings.learningLanguage"
             placeholder="Select a learning language"
           >
-            <option v-for="lang in languages" :key="lang" :value="lang">{{
-              lang
-            }}</option>
+            <option
+              v-for="lang in languages"
+              :key="lang.name"
+              :value="lang.lang"
+              >{{ lang.name }}</option
+            >
           </b-select>
         </b-field>
       </b-field>
@@ -106,7 +109,7 @@
 
 <script lang="ts">
 import { Component, Prop, Emit, Vue } from "vue-property-decorator";
-import { SettingsView } from "@/components/views.type";
+import { Language, SettingsView } from "@/components/views.type";
 import { GameModeEnum } from "@/enums/gameMode";
 import { QuestionMode, QuestionModeEnum } from "@/enums/questionMode";
 
@@ -128,7 +131,7 @@ export default class SettingsModal extends Vue {
   }
 
   @Prop() private readonly settings!: SettingsView;
-  @Prop() private readonly languages!: Array<string>;
+  @Prop() private readonly languages!: Array<Language>;
 
   @Emit() apply(): SettingsView {
     return this.newSettings;

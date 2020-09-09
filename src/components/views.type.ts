@@ -31,3 +31,8 @@ export interface GroupedDailyStatisticsView
   yearMonth: string;
   items: Array<DailyStatisticsView>;
 }
+
+export interface Language {
+  name: string;
+  lang: string;
+}
