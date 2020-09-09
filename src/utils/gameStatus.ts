@@ -73,6 +73,15 @@ export default class GameStatus {
     return this._speech.isSpeaking;
   }
 
+  get canLookOptions(): boolean {
+    return (
+      this._event$.value === "ACCEPTING_ANSWER" ||
+      this._event$.value === "ANSWERING_CLOSED" ||
+      this._event$.value === "ANSWERED_CORRECTLY" ||
+      this._event$.value === "ANSWERED_INCORRECTLY"
+    );
+  }
+
   get canAnswer(): boolean {
     return this._event$.value === "ACCEPTING_ANSWER";
   }
