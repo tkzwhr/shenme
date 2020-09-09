@@ -22,6 +22,7 @@
       v-if="game.currentQuestion"
       :disabled="!game.canAnswer"
       :options="game.currentOptions"
+      :shows-options="game.canLookOptions"
       :answer="game.currentAnswer"
       :shows-answer="game.timeIsUp"
       @select="game.answer($event)"

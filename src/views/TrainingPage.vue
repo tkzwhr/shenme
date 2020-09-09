@@ -11,6 +11,7 @@
       v-if="game.currentQuestion"
       :disabled="!game.canAnswer"
       :options="game.currentOptions"
+      :shows-options="true"
       :answer="game.currentAnswer"
       @select="game.answer($event)"
     ></answers-panel>

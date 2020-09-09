@@ -8,7 +8,7 @@
         :outlined="type(i) === null"
         :disabled="disabled"
         @click="checkAnswer(options[i])"
-        >{{ options[i] }}</b-button
+        >{{ showsOptions ? options[i] : "" }}</b-button
       >
     </div>
   </div>
@@ -22,6 +22,7 @@ export default class AnswersPanel extends Vue {
   @Prop() private readonly disabled!: boolean;
   // noinspection JSMismatchedCollectionQueryUpdate
   @Prop() private readonly options!: Array<string>;
+  @Prop() private readonly showsOptions?: boolean;
   @Prop() private readonly answer!: string;
   @Prop() private readonly showsAnswer?: boolean;
 
